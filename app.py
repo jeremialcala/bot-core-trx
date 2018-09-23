@@ -22,6 +22,7 @@ def verify():
 def getMessage():
     data = request.get_json()
     log(data)
+    return "OK", 200
 
 
 def log(message):  # simple wrapper for logging to stdout on heroku
