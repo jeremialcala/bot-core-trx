@@ -25,13 +25,13 @@ def getMessage():
     data = request.get_json()
     log(data)
     if data["object"] == "page":
-        user_id = data['entry'][0]['messaging'][0]['sender']['id']
-        user = json.loads(get_user_by_id(user_id))
         if "message" in data['entry'][0]['messaging'][0]:
+            user_id = data['entry'][0]['messaging'][0]['sender']['id']
+            user = json.loads(get_user_by_id(user_id))
             message = data['entry'][0]['messaging'][0]['message']
             log(user["id"])
             msg = "Gracias por su preferencia que tenga un buen dia 👋"
-            send_message(user["id"], message["text"])
+            send_message(user["id"], msg)
 
     return "OK", 200
 
