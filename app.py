@@ -26,9 +26,10 @@ def getMessage():
     log(data)
     user_id = data['entry'][0]['messaging'][0]['sender']['id']
     user = json.loads(get_user_by_id(user_id))
+    message = data['entry'][0]['messaging'][0]
     log(user["id"])
     msg = "Gracias por su preferencia que tenga un buen dia 👋"
-    # send_message(user_id, msg)
+    send_message(user["id"], msg)
 
     return "OK", 200
 
