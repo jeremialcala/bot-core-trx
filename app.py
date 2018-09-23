@@ -27,7 +27,7 @@ def getMessage():
     user_id = data['entry'][0]['messaging'][0]['sender']['id']
     log(get_user_by_id(user_id))
     msg = "Gracias por su preferencia que tenga un buen dia 👋"
-    send_message(user_id, msg)
+    # send_message(user_id, msg)
 
     return "OK", 200
 
