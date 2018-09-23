@@ -24,7 +24,7 @@ def verify():
 def getMessage():
     data = request.get_json()
     log(data)
-    send_message(data['entry']['messaging']['sender']['id'], "HOLA!")
+    send_message(data['entry'][0]['messaging'][0]['sender']['id'], "HOLA!")
     return "OK", 200
 
 
