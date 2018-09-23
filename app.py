@@ -29,7 +29,7 @@ def getMessage():
     message = data['entry'][0]['messaging'][0]
     log(user["id"])
     msg = "Gracias por su preferencia que tenga un buen dia 👋"
-    send_message(user["id"], msg)
+    # send_message(user["id"], msg)
 
     return "OK", 200
 
