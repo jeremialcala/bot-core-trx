@@ -18,6 +18,17 @@ def verify():
     return "Hello world", 200
 
 
+@app.route('/', methods=['POST'])
+def getMessage():
+    data = request.get_json()
+    log(data)
+
+
+def log(message):  # simple wrapper for logging to stdout on heroku
+    print(str(message))
+    sys.stdout.flush()
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
