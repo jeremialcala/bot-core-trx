@@ -24,9 +24,25 @@ def verify():
 def getMessage():
     data = request.get_json()
     log(data)
-    # send_message(data['entry'][0]['messaging'][0]['sender']['id'], "HOLA!")
-    
+    user_id = data['entry'][0]['messaging'][0]['sender']['id']
+    log(get_user_by_id(user_id))
+    msg = "Gracias por su preferencia que tenga un buen dia 👋"
+    send_message(user_id, msg)
+
     return "OK", 200
+
+
+def get_user_by_id(user_id):
+    url = "https://graph.facebook.com/USER_ID?&access_token="
+    url = url.replace("USER_ID", user_id) + os.environ["PAGE_ACCESS_TOKEN"]
+    # log(url)
+    r = requests.get(url)
+    if r.status_code != 200:
+        log(r.status_code)
+        log(r.text)
+        return r.status_code, r.text
+    else:
+        return r.text
 
 
 def send_message(recipient_id, message_text):
