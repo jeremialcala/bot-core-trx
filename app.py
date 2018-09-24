@@ -33,7 +33,6 @@ def getMessage():
     if data["object"] == "page":
         if "message" in data['entry'][0]['messaging'][0]:
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
-            message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
             user = json.loads(get_user_by_id(user_id))
             # log(user)
             if "error" in user:
@@ -55,9 +54,11 @@ def getMessage():
                 aceptTyC(user["id"])
             else:
                 send_message(user["id"], msg)
-                
-            categories = classification(message, False, db)
-            log(categories)
+
+            if "text" in data['entry'][0]['messaging'][0]:
+                message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
+                categories = classification(message, False, db)
+                log(categories)
             # send_termandc(user["id"])
             # time.sleep(2)
             # aceptTyC(user["id"])
