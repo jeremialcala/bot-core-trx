@@ -47,15 +47,14 @@ def getMessage():
                     user = document
             if "tyc" not in user:
                 # log(user)
-                msg = "Hola " + user["first_name"] + \
-                      " te ayudaré a realizar las consultas que necesites de tus tarjetas"
+                msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
                 send_message(user["id"], msg)
 
                 send_termandc(user["id"])
                 time.sleep(2)
                 aceptTyC(user["id"])
             else:
-                msg = "Hola " + user["first_name"]
+                msg = "Hola "
                 send_message(user["id"], msg)
 
     return "OK", 200
