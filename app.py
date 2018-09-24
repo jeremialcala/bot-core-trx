@@ -48,11 +48,14 @@ def getMessage():
             else:
                 for document in result:
                     user = document
-            if "text" in data['entry'][0]['messaging'][0]:
+
+            if "text" in data['entry'][0]['messaging'][0]["message"]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
+                log(message)
                 categories = classification(message, False, db)
                 log(categories)
                 response = generator(categories, db, user)
+                log(response)
                 user = response["user"]
                 msg = response["msg"]
 
