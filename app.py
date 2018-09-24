@@ -51,7 +51,7 @@ def getMessage():
             if "tyc" not in user:
                 send_message(user["id"], msg)
                 send_termandc(user["id"])
-                # aceptTyC(user["id"])
+                aceptTyC(user["id"])
             else:
                 send_message(user["id"], msg)
 
@@ -130,10 +130,7 @@ def send_termandc(recipient_id):
         }
     })
     log(data)
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 
 def aceptTyC(recipient_id):
@@ -145,29 +142,26 @@ def aceptTyC(recipient_id):
     }
     data = json.dumps({
               "recipient":{
-                "id":"1752570331535883"
+                "id": recipient_id
               },
               "message":{
                 "text": "Solo tienes que hacer clic en \"Acepto\" para iniciar...",
-                "quick_replies":[
+                "quick_replies": [
                   {
-                    "content_type":"text",
-                    "title":"Acepto",
-                    "payload":"<POSTBACK_PAYLOAD>"
+                    "content_type": "text",
+                    "title": "Acepto",
+                    "payload": "<POSTBACK_PAYLOAD>"
                   },
                   {
-                    "content_type":"text",
-                    "title":"No acepto",
-                    "payload":"<POSTBACK_PAYLOAD>"
+                    "content_type": "text",
+                    "title": "No acepto",
+                    "payload": "<POSTBACK_PAYLOAD>"
                   }
                 ]
               }
             })
     log(data)
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 
 def sendMenu():
