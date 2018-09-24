@@ -41,9 +41,6 @@ def getMessage():
             else:
                 for document in result:
                     user = document
-                    if "first_name" not in user:
-                        user["first_name"] = "Amigo"
-
             if "tyc" not in user:
                 message = data['entry'][0]['messaging'][0]['message']
                 # log(user)
