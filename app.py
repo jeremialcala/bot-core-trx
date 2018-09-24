@@ -30,15 +30,17 @@ def verify():
 def getMessage():
     data = request.get_json()
     log(data)
-    db = get_mongodb()
     if data["object"] == "page":
         if "message" in data['entry'][0]['messaging'][0]:
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
-            result = db.users.find({'id': user_id})
             user = json.loads(get_user_by_id(user_id))
             log(user)
             if "error" in user:
+                log("Error usuario no encontrado")
                 return "OK", 200
+
+            db = get_mongodb()
+            result = db.users.find({'id': user_id})
 
             if result.count() is 0:
                 db.users.insert_one(user)
@@ -65,7 +67,7 @@ def get_user_by_id(user_id):
     # log(url)
     r = requests.get(url)
     if r.status_code != 200:
-        log(r.status_code)
+        # log(r.status_code)
         # log(r.text)
         return r.text
     else:
