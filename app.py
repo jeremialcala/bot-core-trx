@@ -5,6 +5,7 @@ import requests
 import json
 import pymongo
 import time
+from datetime import datetime
 from flask import Flask, request
 from flask import render_template
 from flask import send_file
@@ -47,22 +48,36 @@ def getMessage():
             else:
                 for document in result:
                     user = document
-            msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
-            if "tyc" not in user:
-                send_message(user["id"], msg)
-                send_termandc(user["id"])
-                aceptTyC(user["id"])
-            else:
-                send_message(user["id"], msg)
-
             if "text" in data['entry'][0]['messaging'][0]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                 categories = classification(message, False, db)
                 log(categories)
-            # send_termandc(user["id"])
-            # time.sleep(2)
-            # aceptTyC(user["id"])
+                response = generator(categories, db, user)
+                user = response["user"]
+                msg = response["msg"]
+
+                if "tyc" not in user:
+                    send_message(user["id"], msg)
+                    send_termandc(user["id"])
+                    aceptTyC(user["id"])
+                else:
+                    send_message(user["id"], msg)
+
     return "OK", 200
+
+
+def generator(categries, db, user):
+    log("responseGenerator")
+    message = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
+    global mail_body
+    global sms_body
+    if "accept" in categries:
+        message = "Gracias!"
+        if "tyc" not in user:
+            user['tyc'] = 1
+            db.users.update({user['id']},{'$set': {'tyc': 1, "date-tyc": datetime.now()}})
+
+    return {"user": user, "msg": message}
 
 
 def get_user_by_id(user_id):
@@ -203,8 +218,6 @@ def classification(sentence, registered, db):
                     if word.lower().find(mean) != -1 and concept not in my_categories:
                         log("palabra: " + word + " Significado: " + mean + " Concepto: " + concept)
                         my_categories.append(concept)
-
-
 
     return my_categories
 
