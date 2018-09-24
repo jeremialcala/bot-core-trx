@@ -33,6 +33,7 @@ def getMessage():
     if data["object"] == "page":
         if "message" in data['entry'][0]['messaging'][0]:
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
+            message = data['entry'][0]['messaging'][0]["message"]["text"]
             user = json.loads(get_user_by_id(user_id))
             # log(user)
             if "error" in user:
@@ -50,6 +51,8 @@ def getMessage():
 
             msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
             send_message(user["id"], msg)
+            categories = classification(message, False, db)
+            log(categories)
             # send_termandc(user["id"])
             # time.sleep(2)
             # aceptTyC(user["id"])
@@ -198,18 +201,10 @@ def classification(sentence, registered, db):
             if type(dictionary[concept]) is list:
                 for mean in dictionary[concept]:
                     if word.lower().find(mean) != -1 and concept not in my_categories:
-                        log("palabra: " + word + " Significado: " + mean + " Concepto: " + concept, file)
+                        log("palabra: " + word + " Significado: " + mean + " Concepto: " + concept)
                         my_categories.append(concept)
 
-        for movimiento in movimientos:
-            if 'movimientos' not in my_categories:
-                if word.lower().find(movimiento) != -1 and registered:
-                    my_categories.append('movimientos')
 
-        for reg in registration:
-            if 'registration' not in my_categories:
-                if word.lower().find(reg) != -1 or not registered:
-                    my_categories.append('registration')
 
     return my_categories
 
