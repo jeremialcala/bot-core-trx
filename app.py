@@ -51,7 +51,7 @@ def getMessage():
             if "tyc" not in user:
                 send_message(user["id"], msg)
                 send_termandc(user["id"])
-                aceptTyC(user["id"])
+                # aceptTyC(user["id"])
             else:
                 send_message(user["id"], msg)
 
