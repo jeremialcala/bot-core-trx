@@ -33,7 +33,7 @@ def getMessage():
     if data["object"] == "page":
         if "message" in data['entry'][0]['messaging'][0]:
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
-            message = data['entry'][0]['messaging'][0]["message"]["text"]
+            message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
             user = json.loads(get_user_by_id(user_id))
             # log(user)
             if "error" in user:
@@ -48,9 +48,14 @@ def getMessage():
             else:
                 for document in result:
                     user = document
-
             msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
-            send_message(user["id"], msg)
+            if "tyc" not in user:
+                send_message(user["id"], msg)
+                send_termandc(user["id"])
+                aceptTyC(user["id"])
+            else:
+                send_message(user["id"], msg)
+                
             categories = classification(message, False, db)
             log(categories)
             # send_termandc(user["id"])
