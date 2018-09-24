@@ -74,7 +74,7 @@ def generator(categries, db, user):
     message = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
     global mail_body
     global sms_body
-    if "accept" in categries:
+    if "accept" in categries and "negative" not in categries:
         message = "Gracias!"
         if "tyc" not in user:
             user['tyc'] = 1
@@ -165,16 +165,16 @@ def aceptTyC(recipient_id):
               "message":{
                 "text": "Solo tienes que hacer clic en \"Acepto\" para iniciar...",
                 "quick_replies": [
-                  {
-                    "content_type": "text",
-                    "title": "Acepto",
-                    "payload": "<POSTBACK_PAYLOAD>"
-                  },
-                  {
-                    "content_type": "text",
-                    "title": "No acepto",
-                    "payload": "<POSTBACK_PAYLOAD>"
-                  }
+                    {
+                        "content_type": "text",
+                        "title": "Acepto",
+                        "payload": "<POSTBACK_PAYLOAD>"
+                    },
+                    {
+                        "content_type": "text",
+                        "title": "No Acepto",
+                        "payload": "<POSTBACK_PAYLOAD>"
+                    }
                 ]
               }
             })
