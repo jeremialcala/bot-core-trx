@@ -78,7 +78,7 @@ def generator(categries, db, user):
         message = "Gracias!"
         if "tyc" not in user:
             user['tyc'] = 1
-            db.users.update({user['id']},{'$set': {'tyc': 1, "date-tyc": datetime.now()}})
+            db.users.update({"id": user['id']}, {'$set': {'tyc': 1, "date-tyc": datetime.now()}})
 
     return {"user": user, "msg": message}
 
