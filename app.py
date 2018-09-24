@@ -34,7 +34,7 @@ def getMessage():
         if "message" in data['entry'][0]['messaging'][0]:
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
             user = json.loads(get_user_by_id(user_id))
-            log(user)
+            # log(user)
             if "error" in user:
                 log("Error usuario no encontrado")
                 return "OK", 200
@@ -55,8 +55,6 @@ def getMessage():
                 send_termandc(user["id"])
                 time.sleep(2)
                 aceptTyC(user["id"])
-            else:
-                send_message(user["id"], "hola")
 
     return "OK", 200
 
@@ -91,9 +89,6 @@ def send_message(recipient_id, message_text):
         }
     })
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)
 
 
 def send_termandc(recipient_id):
