@@ -35,12 +35,12 @@ def getMessage():
         if "message" in data['entry'][0]['messaging'][0]:
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
             result = db.users.find({'id': user_id})
+            user = json.loads(get_user_by_id(user_id))
 
-            if user_id is "239768983381707":
+            if "error" in user:
                 return "OK", 200
 
             if result.count() is 0:
-                user = json.loads(get_user_by_id(user_id))
                 db.users.insert_one(user)
             else:
                 for document in result:
