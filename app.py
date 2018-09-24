@@ -36,7 +36,7 @@ def getMessage():
             user_id = data['entry'][0]['messaging'][0]['sender']['id']
             result = db.users.find({'id': user_id})
             user = json.loads(get_user_by_id(user_id))
-
+            log(user)
             if "error" in user:
                 return "OK", 200
 
@@ -67,7 +67,7 @@ def get_user_by_id(user_id):
     if r.status_code != 200:
         log(r.status_code)
         # log(r.text)
-        return r.status_code, r.text
+        return r.text
     else:
         return r.text
 
