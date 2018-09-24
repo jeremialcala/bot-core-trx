@@ -12,6 +12,9 @@ from pymongo.errors import DuplicateKeyError
 
 
 app = Flask(__name__)
+movimientos = ['movimientos', 'transacciones']
+registration = ['resgistro', 'registrarme', 'afiliarme', 'registrar']
+acepto = ['acepto', 'aceptar', 'entiendo', 'aceptado', 'entendido', 'admitir', 'consentir', 'aceder']
 
 
 @app.route('/', methods=['GET'])
@@ -38,6 +41,8 @@ def getMessage():
             else:
                 for document in result:
                     user = document
+                    if "first_name" not in user:
+                        user["first_name"] = "Amigo"
 
             if "tyc" not in user:
                 message = data['entry'][0]['messaging'][0]['message']
@@ -193,6 +198,28 @@ def sendMenu():
     return menu
 
 
+def classification(sentence, registered, db):
+    my_categories = []
+    dictionary = db.dictionary.find_one()
+    for word in sentence:
+        for concept in dictionary:
+            if type(dictionary[concept]) is list:
+                for mean in dictionary[concept]:
+                    if word.lower().find(mean) != -1 and concept not in my_categories:
+                        log("palabra: " + word + " Significado: " + mean + " Concepto: " + concept, file)
+                        my_categories.append(concept)
+
+        for movimiento in movimientos:
+            if 'movimientos' not in my_categories:
+                if word.lower().find(movimiento) != -1 and registered:
+                    my_categories.append('movimientos')
+
+        for reg in registration:
+            if 'registration' not in my_categories:
+                if word.lower().find(reg) != -1 or not registered:
+                    my_categories.append('registration')
+
+    return my_categories
 
 
 def log(message):  # simple wrapper for logging to stdout on heroku
