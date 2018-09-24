@@ -30,6 +30,29 @@ def verify():
 def getMessage():
     data = request.get_json()
     log(data)
+    if data["object"] == "page":
+        if "message" in data['entry'][0]['messaging'][0]:
+            user_id = data['entry'][0]['messaging'][0]['sender']['id']
+            user = json.loads(get_user_by_id(user_id))
+            # log(user)
+            if "error" in user:
+                log("Error usuario no encontrado")
+                return "OK", 200
+
+            db = get_mongodb()
+            result = db.users.find({'id': user_id})
+
+            if result.count() is 0:
+                db.users.insert_one(user)
+            else:
+                for document in result:
+                    user = document
+
+            msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
+            send_message(user["id"], msg)
+            # send_termandc(user["id"])
+            # time.sleep(2)
+            # aceptTyC(user["id"])
     return "OK", 200
 
 
