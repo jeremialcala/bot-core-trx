@@ -109,7 +109,7 @@ def generator(categries, db, user):
         send_message(user["id"], message)
         db.users.update({"id": user['id']}, {'$set': {'registedStatus': 0, "date-registedStatus": datetime.now()}})
         message = "indicame tu numero de identifcación"
-        # send_message(user["id"], message)
+        send_message(user["id"], message)
 
     return {"user": user, "msg": message}
 
