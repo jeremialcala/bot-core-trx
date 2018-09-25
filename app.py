@@ -13,9 +13,6 @@ from pymongo.errors import DuplicateKeyError
 
 
 app = Flask(__name__)
-movimientos = ['movimientos', 'transacciones']
-registration = ['resgistro', 'registrarme', 'afiliarme', 'registrar']
-acepto = ['acepto', 'aceptar', 'entiendo', 'aceptado', 'entendido', 'admitir', 'consentir', 'aceder']
 
 
 @app.route('/', methods=['GET'])
@@ -28,27 +25,35 @@ def verify():
 
 
 @app.route('/', methods=['POST'])
-def getMessage():
+def get_message():
     data = request.get_json()
     log(data)
+    messaging = data['entry'][0]['messaging'][0]
     if data["object"] == "page":
-        if "message" in data['entry'][0]['messaging'][0]:
-            user_id = data['entry'][0]['messaging'][0]['sender']['id']
-            user = json.loads(get_user_by_id(user_id))
-            # log(user)
-            if "error" in user:
-                log("Error usuario no encontrado")
-                return "OK", 200
+        user_id = data['entry'][0]['messaging'][0]['sender']['id']
+        user = json.loads(get_user_by_id(user_id))
 
-            db = get_mongodb()
-            result = db.users.find({'id': user_id})
+        if "error" in user:
+            log("Error usuario no encontrado")
+            return "OK", 200
 
-            if result.count() is 0:
-                db.users.insert_one(user)
-            else:
-                for document in result:
-                    user = document
+        db = get_mongodb()
+        result = db.users.find({'id': user_id})
+        msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
 
+        if result.count() is 0:
+            db.users.insert_one(user)
+        else:
+            for document in result:
+                user = document
+
+        if "tyc" not in user:
+            send_message(user["id"], msg)
+            send_termandc(user["id"])
+            accept_tyc(user["id"])
+            return "OK", 200
+
+        if "message" in messaging:
             if "text" in data['entry'][0]['messaging'][0]["message"]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                 log(message)
@@ -57,14 +62,29 @@ def getMessage():
                 response = generator(categories, db, user)
                 log(response)
                 user = response["user"]
-                msg = response["msg"]
+                send_message(user["id"], response["msg"])
 
-                if "tyc" not in user:
-                    send_message(user["id"], msg)
-                    send_termandc(user["id"])
-                    aceptTyC(user["id"])
-                else:
-                    send_message(user["id"], msg)
+        if "postback" in messaging:
+            if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
+                send_message(user["id"], "Claro que si vamos a empezar")
+                send_operations(user["id"])
+                return "OK", 200
+
+            if "registedStatus" not in user:
+                send_message(user["id"], "Primero tenemos que abrir una cuenta")
+                options = [{"content_type": "text", "title": "Registrame", "payload": "POSTBACK_PAYLOAD"},
+                           {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
+                send_options(user["id"], options)
+                return "OK", 200
+
+            if user["registedStatus"] == 0:
+                send_message(user["id"], "Aun no terminas tu registro...")
+                send_message(user["id"], "indicame tu numero de identifcación")
+                return "OK", 200
+
+            if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
+                send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
+                return "OK", 200
 
     return "OK", 200
 
@@ -74,11 +94,22 @@ def generator(categries, db, user):
     message = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
     global mail_body
     global sms_body
+
     if "accept" in categries and "negative" not in categries:
         message = "Gracias!"
         if "tyc" not in user:
             user['tyc'] = 1
             db.users.update({"id": user['id']}, {'$set': {'tyc': 1, "date-tyc": datetime.now()}})
+
+    if "tyc" not in user:
+        return {"user": user, "msg": message}
+
+    if "registration" in categries:
+        message = "Listo! vamos a iniciar el proceso"
+        send_message(user["id"], message)
+        db.users.update({"id": user['id']}, {'$set': {'registedStatus': 0, "date-registedStatus": datetime.now()}})
+        message = "indicame tu numero de identifcación"
+        send_message(user["id"], message)
 
     return {"user": user, "msg": message}
 
@@ -151,7 +182,30 @@ def send_termandc(recipient_id):
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 
-def aceptTyC(recipient_id):
+def send_options(recipient_id, options):
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+              "recipient":{
+                "id": recipient_id
+              },
+              "message":{
+                "text": "te gustaria iniciar el proceso?",
+                "quick_replies": [
+                    options[0],
+                    options[1]
+                ]
+              }
+            })
+    log(data)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+
+
+def accept_tyc(recipient_id):
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
     }
@@ -182,33 +236,63 @@ def aceptTyC(recipient_id):
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 
-def sendMenu():
-    menu = json.dumps({"persistent_menu":
-                {
-                  "locale": "default",
-                  "composer_input_disabled": True,
-                  "call_to_actions": [
-                    {
-                      "title":"My Account",
-                      "type":"nested",
-                      "call_to_actions": [
-                        {
-                          "title": "Pay Bill",
-                          "type": "postback",
-                          "payload": "PAYBILL_PAYLOAD"
-                        },
-                        {
-                          "type": "web_url",
-                          "title": "Latest News",
-                          "url": "https://www.messenger.com/",
-                          "webview_height_ratio": "full"
-                        }
-                      ]
-                    }
-                  ]
-                }
-    })
-    return menu
+def send_operations(recipient_id):
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+                        "recipient":{
+                          "id": recipient_id
+                           },
+                           "message": {
+                              "attachment": {
+                                 "type":"template",
+                                 "payload": {
+                                    "template_type":"generic",
+                                    "elements": [
+                                       {
+                                          "title": "sample",
+                                          "subtitle": "We ve got the right hat for everyone.",
+                                          "buttons": [
+                                             {
+                                                "type": "postback",
+                                                "title": "Screen 01",
+                                                "payload": "Book Me a Venue"
+                                             }
+                                          ]
+                                       },
+                                       {
+                                          "title":"sample",
+                                          "subtitle": "We ve got the right hat for everyone.",
+                                          "buttons":[
+                                             {
+                                                "type": "postback",
+                                                "title": "Screen 02",
+                                                "payload": "Book Me a Venue"
+                                             }
+                                          ]
+                                       },
+                                       {
+                                          "title":"sample",
+                                          "subtitle": "We ve got the right hat for everyone.",
+                                          "buttons": [
+                                             {
+                                                "type": "postback",
+                                                "title": "Screen 03",
+                                                "payload": "Book Me a Venue"
+                                             }
+                                          ]
+                                       }
+                                    ]
+                                 }
+                              }
+                           }
+                        })
+    log(data)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 
 def classification(sentence, registered, db):
