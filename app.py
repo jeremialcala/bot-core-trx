@@ -49,7 +49,7 @@ def get_message():
                 log(message)
 
                 if user["registedStatus"] == 1:
-                    documentNumber = only_numerics(message)
+                    documentNumber = only_numerics(data['entry'][0]['messaging'][0]["message"]["text"])
                     msg = "verifica tu numero de identificación e intenta de nuevo"
 
                     if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
