@@ -83,8 +83,8 @@ def get_message():
                     accept_tyc(user["id"])
                     return "OK", 200
 
-            if "greet" in categories:
-                send_operations(user["id"])
+                if "greet" in categories:
+                    send_operations(user["id"])
 
         if "postback" in messaging:
             if "tyc" not in user:
