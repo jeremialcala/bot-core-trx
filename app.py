@@ -48,11 +48,6 @@ def get_message():
                 user = document
 
         if "message" in messaging:
-            if "tyc" not in user:
-                send_message(user["id"], msg)
-                send_termandc(user["id"])
-                accept_tyc(user["id"])
-                return "OK", 200
 
             if "text" in data['entry'][0]['messaging'][0]["message"]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
@@ -63,6 +58,11 @@ def get_message():
                 log(response)
                 user = response["user"]
                 send_message(user["id"], response["msg"])
+
+                if "tyc" not in user:
+                    send_termandc(user["id"])
+                    accept_tyc(user["id"])
+                    return "OK", 200
 
         if "postback" in messaging:
             if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
