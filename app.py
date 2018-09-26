@@ -222,12 +222,12 @@ def accept_tyc(recipient_id):
                     {
                         "content_type": "text",
                         "title": "Acepto",
-                        "payload": "<POSTBACK_PAYLOAD>"
+                        "payload": "POSTBACK_PAYLOAD"
                     },
                     {
                         "content_type": "text",
                         "title": "No Acepto",
-                        "payload": "<POSTBACK_PAYLOAD>"
+                        "payload": "POSTBACK_PAYLOAD"
                     }
                 ]
               }
