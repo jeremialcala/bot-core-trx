@@ -117,7 +117,7 @@ def get_message():
             if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
                 send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
                 return "OK", 200
-
+    send_termandc(user["id"])
     return "OK", 200
 
 
@@ -317,35 +317,35 @@ def send_operations(recipient_id):
                                     "template_type":"generic",
                                     "elements": [
                                        {
-                                          "title": "sample",
-                                          "subtitle": "We ve got the right hat for everyone.",
+                                          "title": "Enviar Dinero",
+                                          "subtitle": "Envia dinero a tus amigos registrados o no registrados.",
                                           "buttons": [
                                              {
                                                 "type": "postback",
-                                                "title": "Screen 01",
-                                                "payload": "Book Me a Venue"
+                                                "title": "Enviar Dinero",
+                                                "payload": "PAYBILL_PAYLOAD"
                                              }
                                           ]
                                        },
                                        {
-                                          "title":"sample",
-                                          "subtitle": "We ve got the right hat for everyone.",
+                                          "title":"Consulta de Saldo",
+                                          "subtitle": "Consulta el saldo Disponible de tus tarjetas.",
                                           "buttons":[
                                              {
                                                 "type": "postback",
-                                                "title": "Screen 02",
-                                                "payload": "Book Me a Venue"
+                                                "title": "Saldos",
+                                                "payload": "BALANCE_PAYLOAD"
                                              }
                                           ]
                                        },
                                        {
-                                          "title":"sample",
-                                          "subtitle": "We ve got the right hat for everyone.",
+                                          "title":"Consulta de Movimientos",
+                                          "subtitle": "Consulta las operaciones realizadas.",
                                           "buttons": [
                                              {
                                                 "type": "postback",
-                                                "title": "Screen 03",
-                                                "payload": "Book Me a Venue"
+                                                "title": "Movimientos",
+                                                "payload": "MOVEMENTS_PAYLOAD"
                                              }
                                           ]
                                        }
