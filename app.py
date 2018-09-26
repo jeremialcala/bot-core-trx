@@ -65,6 +65,12 @@ def get_message():
                     return "OK", 200
 
         if "postback" in messaging:
+            if "tyc" not in user:
+                send_message(user["id"], msg)
+                send_termandc(user["id"])
+                accept_tyc(user["id"])
+                return "OK", 200
+
             if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
                 send_message(user["id"], "Claro que si vamos a empezar")
                 send_operations(user["id"])
