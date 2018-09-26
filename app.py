@@ -156,7 +156,7 @@ def generator(categories, db, user):
 def get_document_type(categories):
     if "cedula" in categories:
         return categories[categories.index("cedula")]
-    if "pasaport" in categories:
+    if "passport" in categories:
         return categories[categories.index("passport")]
 
 
