@@ -83,6 +83,9 @@ def get_message():
                     accept_tyc(user["id"])
                     return "OK", 200
 
+            if "greet" in categories:
+                send_operations(user["id"])
+
         if "postback" in messaging:
             if "tyc" not in user:
                 send_message(user["id"], msg)
@@ -117,6 +120,7 @@ def get_message():
             if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
                 send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
                 return "OK", 200
+
     return "OK", 200
 
 
