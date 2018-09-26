@@ -117,7 +117,6 @@ def get_message():
             if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
                 send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
                 return "OK", 200
-    send_termandc(user["id"])
     return "OK", 200
 
 
