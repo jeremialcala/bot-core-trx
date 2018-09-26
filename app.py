@@ -47,13 +47,13 @@ def get_message():
             for document in result:
                 user = document
 
-        if "tyc" not in user:
-            send_message(user["id"], msg)
-            send_termandc(user["id"])
-            accept_tyc(user["id"])
-            return "OK", 200
-
         if "message" in messaging:
+            if "tyc" not in user:
+                send_message(user["id"], msg)
+                send_termandc(user["id"])
+                accept_tyc(user["id"])
+                return "OK", 200
+
             if "text" in data['entry'][0]['messaging'][0]["message"]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                 log(message)
@@ -63,6 +63,28 @@ def get_message():
                 log(response)
                 user = response["user"]
                 send_message(user["id"], response["msg"])
+
+        if "postback" in messaging:
+            if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
+                send_message(user["id"], "Claro que si vamos a empezar")
+                send_operations(user["id"])
+                return "OK", 200
+
+            if "registedStatus" not in user:
+                send_message(user["id"], "Primero tenemos que abrir una cuenta")
+                options = [{"content_type": "text", "title": "Registrame", "payload": "POSTBACK_PAYLOAD"},
+                           {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
+                send_options(user["id"], options)
+                return "OK", 200
+
+            if user["registedStatus"] == 0:
+                send_message(user["id"], "Aun no terminas tu registro...")
+                send_message(user["id"], "indicame tu numero de identifcación")
+                return "OK", 200
+
+            if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
+                send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
+                return "OK", 200
 
     return "OK", 200
 
