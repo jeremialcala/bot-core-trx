@@ -56,21 +56,20 @@ def get_message():
                         if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
                             db.users.update({"id": user['id']},
                                             {'$set': {"registedStatus": 2,
-                                                      'document': {"documentNumber": documentNumber["numbers"]},
+                                                      "document": {"documentType": "cedula",
+                                                                   "documentNumber": documentNumber["numbers"]},
                                                       "date-registedStatus": datetime.now()}})
                             send_message(user["id"], "Listo! tu cedula fue registrada exitosamente")
                             return "OK", 200
 
-                        if user["document"]["documentType"] == "passport" and documentNumber["rc"] == 0:
+                        if user["document"]["documentType"] == "passport" and documentNumber["rc"] != -500:
                             db.users.update({"id": user['id']},
                                             {'$set': {"registedStatus": 2,
-                                                      'document': {"documentNumber": documentNumber["numbers"]},
+                                                      "document": {"documentType": "passport",
+                                                                   "documentNumber": documentNumber["numbers"]},
                                                       "date-registedStatus": datetime.now()}})
                             send_message(user["id"], "Gracias! ya pude guardar tu info")
                             return "OK", 200
-
-
-
 
                 categories = classification(message, False, db)
                 log(categories)
@@ -176,7 +175,7 @@ def only_numerics(text):
     if len(text) != len(resp) and len(resp) != 0:
         return {"rc": -123, "msg": "no todos los caracteres no son numeros", "numbers": resp}
     elif len(resp) == 0:
-        return {"rc": '-500', "msg": "no hay numeros en este texto", "numbers": resp}
+        return {"rc": -500, "msg": "no hay numeros en este texto", "numbers": resp}
 
     return {"rc": 0, "msg": "Process OK", "numbers": resp}
 
