@@ -1,16 +1,12 @@
 # -*- coding: utf8 -*-
-import sys
-import os
-import requests
 import json
-import pymongo
-import time
+import os
+import sys
 from datetime import datetime
-from flask import Flask, request
-from flask import render_template
-from flask import send_file
-from pymongo.errors import DuplicateKeyError
 
+import pymongo
+import requests
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -80,12 +76,15 @@ def get_message():
                 send_message(user["id"], "Primero tenemos que abrir una cuenta")
                 options = [{"content_type": "text", "title": "Registrame", "payload": "POSTBACK_PAYLOAD"},
                            {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
-                send_options(user["id"], options)
+                send_options(user["id"], options, "te gustaria iniciar el proceso?")
                 return "OK", 200
 
             if user["registedStatus"] == 0:
                 send_message(user["id"], "Aun no terminas tu registro...")
                 send_message(user["id"], "indicame tu numero de identifcación")
+                options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
+                           {"content_type": "text", "title": "Pasaporte", "payload": "GET_STARTED_PAYLOAD"}]
+                send_options(user["id"], options, "que tipo de documento tienes?")
                 return "OK", 200
 
             if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
@@ -111,11 +110,15 @@ def generator(categries, db, user):
         return {"user": user, "msg": message}
 
     if "registration" in categries:
-        message = "Listo! vamos a iniciar el proceso"
-        send_message(user["id"], message)
+        send_message(user["id"], "Listo! vamos a iniciar el proceso")
         db.users.update({"id": user['id']}, {'$set': {'registedStatus': 0, "date-registedStatus": datetime.now()}})
+        options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
+                   {"content_type": "text", "title": "Pasaporte", "payload": "GET_STARTED_PAYLOAD"}]
+        send_options(user["id"], options, "que tipo de documento tienes?")
+        message = ""
+
+    if "cedula" in categries or "passport" in categries:
         message = "indicame tu numero de identifcación"
-        # send_message(user["id"], message)
 
     return {"user": user, "msg": message}
 
@@ -123,11 +126,8 @@ def generator(categries, db, user):
 def get_user_by_id(user_id):
     url = "https://graph.facebook.com/USER_ID?&access_token="
     url = url.replace("USER_ID", user_id) + os.environ["PAGE_ACCESS_TOKEN"]
-    # log(url)
     r = requests.get(url)
     if r.status_code != 200:
-        # log(r.status_code)
-        # log(r.text)
         return r.text
     else:
         return r.text
@@ -188,7 +188,7 @@ def send_termandc(recipient_id):
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 
-def send_options(recipient_id, options):
+def send_options(recipient_id, options, text):
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
     }
@@ -200,7 +200,7 @@ def send_options(recipient_id, options):
                 "id": recipient_id
               },
               "message":{
-                "text": "te gustaria iniciar el proceso?",
+                "text": text,
                 "quick_replies": [
                     options[0],
                     options[1]
