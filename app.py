@@ -58,17 +58,19 @@ def get_message():
                                             {'$set': {"registedStatus": 2,
                                                       'document': {"documentNumber": documentNumber["numbers"]},
                                                       "date-registedStatus": datetime.now()}})
-                            msg = "Listo! tu cedula fue registrada exitosamente"
+                            send_message(user["id"], "Listo! tu cedula fue registrada exitosamente")
+                            return "OK", 200
 
                         if user["document"]["documentType"] == "passport" and documentNumber["rc"] == 0:
                             db.users.update({"id": user['id']},
                                             {'$set': {"registedStatus": 2,
                                                       'document': {"documentNumber": documentNumber["numbers"]},
                                                       "date-registedStatus": datetime.now()}})
-                            msg = "Gracias! ya pude guardar tu info"
+                            send_message(user["id"], "Gracias! ya pude guardar tu info")
+                            return "OK", 200
 
-                        send_message(user["id"], msg)
-                        return "OK", 200
+
+
 
                 categories = classification(message, False, db)
                 log(categories)
@@ -143,13 +145,14 @@ def generator(categories, db, user):
         send_options(user["id"], options, "que tipo de documento tienes?")
         message = ""
 
-    if user["registedStatus"] == 0:
-        if "cedula" in categories or "passport" in categories:
-            db.users.update({"id": user['id']},
-                            {'$set': {"registedStatus": 1,
-                                      'document': {"documentType": get_document_type(categories)},
-                                      "date-registedStatus": datetime.now()}})
-            message = "indicame tu numero de identifcación"
+    if "registedStatus" in user:
+        if user["registedStatus"] == 0:
+            if "cedula" in categories or "passport" in categories:
+                db.users.update({"id": user['id']},
+                                {'$set': {"registedStatus": 1,
+                                          'document': {"documentType": get_document_type(categories)},
+                                          "date-registedStatus": datetime.now()}})
+                message = "indicame tu numero de identifcación"
 
     return {"user": user, "msg": message}
 
