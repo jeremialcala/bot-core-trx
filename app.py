@@ -44,7 +44,6 @@ def get_message():
                 user = document
 
         if "message" in messaging:
-
             if "text" in data['entry'][0]['messaging'][0]["message"]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                 log(message)
@@ -74,17 +73,21 @@ def get_message():
 
             if "registedStatus" not in user:
                 send_message(user["id"], "Primero tenemos que abrir una cuenta")
-                options = [{"content_type": "text", "title": "Registrame", "payload": "POSTBACK_PAYLOAD"},
+                options = [{"content_type": "text", "title": "Si!, Registrame", "payload": "POSTBACK_PAYLOAD"},
                            {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
                 send_options(user["id"], options, "te gustaria iniciar el proceso?")
                 return "OK", 200
 
             if user["registedStatus"] == 0:
                 send_message(user["id"], "Aun no terminas tu registro...")
-                send_message(user["id"], "indicame tu numero de identifcación")
                 options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
                            {"content_type": "text", "title": "Pasaporte", "payload": "GET_STARTED_PAYLOAD"}]
                 send_options(user["id"], options, "que tipo de documento tienes?")
+                return "OK", 200
+
+            if user["registedStatus"] == 1:
+                send_message(user["id"], "Vamos a continuar tu afiliacion.")
+                send_message(user["id"],"indicame tu numero de identifcación")
                 return "OK", 200
 
             if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
@@ -94,13 +97,13 @@ def get_message():
     return "OK", 200
 
 
-def generator(categries, db, user):
+def generator(categories, db, user):
     log("responseGenerator")
     message = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
     global mail_body
     global sms_body
 
-    if "accept" in categries and "negative" not in categries:
+    if "accept" in categories and "negative" not in categories:
         message = "Gracias!"
         if "tyc" not in user:
             user['tyc'] = 1
@@ -109,7 +112,7 @@ def generator(categries, db, user):
     if "tyc" not in user:
         return {"user": user, "msg": message}
 
-    if "registration" in categries:
+    if "registration" in categories:
         send_message(user["id"], "Listo! vamos a iniciar el proceso")
         db.users.update({"id": user['id']}, {'$set': {'registedStatus': 0, "date-registedStatus": datetime.now()}})
         options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
@@ -117,11 +120,22 @@ def generator(categries, db, user):
         send_options(user["id"], options, "que tipo de documento tienes?")
         message = ""
 
-    if "cedula" in categries or "passport" in categries:
-        message = "indicame tu numero de identifcación"
+    if user["registedStatus"] == 0:
+        if "cedula" in categories or "passport" in categories:
+            db.users.update({"id": user['id']},
+                            {'$set': {"registedStatus": 1,
+                                      'document': {"documentType": get_document_type(categories)},
+                                      "date-registedStatus": datetime.now()}})
+            message = "indicame tu numero de identifcación"
 
     return {"user": user, "msg": message}
 
+
+def get_document_type(categories):
+    if "cedula" in categories:
+        return categories[categories.index("cedula")]
+    if "pasaport" in categories:
+        return categories[categories.index("passport")]
 
 def get_user_by_id(user_id):
     url = "https://graph.facebook.com/USER_ID?&access_token="
