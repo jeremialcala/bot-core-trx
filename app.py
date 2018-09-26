@@ -28,11 +28,11 @@ def verify():
 def get_message():
     data = request.get_json()
     log(data)
-    messaging = data['entry'][0]['messaging'][0]
-    if data["object"] == "page":
+
+    if "messaging" in data['entry'][0]:
+        messaging = data['entry'][0]['messaging'][0]
         user_id = data['entry'][0]['messaging'][0]['sender']['id']
         user = json.loads(get_user_by_id(user_id))
-
         if "error" in user:
             log("Error usuario no encontrado")
             return "OK", 200
@@ -70,7 +70,21 @@ def get_message():
                 send_operations(user["id"])
                 return "OK", 200
 
+            if "registedStatus" not in user:
+                send_message(user["id"], "Primero tenemos que abrir una cuenta")
+                options = [{"content_type": "text", "title": "Registrame", "payload": "POSTBACK_PAYLOAD"},
+                           {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
+                send_options(user["id"], options)
+                return "OK", 200
 
+            if user["registedStatus"] == 0:
+                send_message(user["id"], "Aun no terminas tu registro...")
+                send_message(user["id"], "indicame tu numero de identifcación")
+                return "OK", 200
+
+            if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
+                send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
+                return "OK", 200
 
     return "OK", 200
 
