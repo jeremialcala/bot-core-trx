@@ -48,26 +48,27 @@ def get_message():
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                 log(message)
 
-                if user["registedStatus"] == 1:
-                    documentNumber = only_numerics(data['entry'][0]['messaging'][0]["message"]["text"])
-                    msg = "verifica tu numero de identificación e intenta de nuevo"
+                if "registedStatus" in user:
+                    if user["registedStatus"] == 1:
+                        documentNumber = only_numerics(data['entry'][0]['messaging'][0]["message"]["text"])
+                        msg = "verifica tu numero de identificación e intenta de nuevo"
 
-                    if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
-                        db.users.update({"id": user['id']},
-                                        {'$set': {"registedStatus": 2,
-                                                  'document': {"documentNumber": documentNumber["numbers"]},
-                                                  "date-registedStatus": datetime.now()}})
-                        msg = "Listo! tu cedula fue registrada exitosamente"
+                        if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
+                            db.users.update({"id": user['id']},
+                                            {'$set': {"registedStatus": 2,
+                                                      'document': {"documentNumber": documentNumber["numbers"]},
+                                                      "date-registedStatus": datetime.now()}})
+                            msg = "Listo! tu cedula fue registrada exitosamente"
 
-                    if user["document"]["documentType"] == "passport" and documentNumber["rc"] == 0:
-                        db.users.update({"id": user['id']},
-                                        {'$set': {"registedStatus": 2,
-                                                  'document': {"documentNumber": documentNumber["numbers"]},
-                                                  "date-registedStatus": datetime.now()}})
-                        msg = "Gracias! ya pude guardar tu info"
+                        if user["document"]["documentType"] == "passport" and documentNumber["rc"] == 0:
+                            db.users.update({"id": user['id']},
+                                            {'$set': {"registedStatus": 2,
+                                                      'document': {"documentNumber": documentNumber["numbers"]},
+                                                      "date-registedStatus": datetime.now()}})
+                            msg = "Gracias! ya pude guardar tu info"
 
-                    send_message(user["id"], msg)
-                    return "OK", 200
+                        send_message(user["id"], msg)
+                        return "OK", 200
 
                 categories = classification(message, False, db)
                 log(categories)
