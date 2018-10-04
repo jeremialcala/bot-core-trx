@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+import re
 from datetime import datetime
 
 import pymongo
@@ -49,27 +50,7 @@ def get_message():
                 log(message)
 
                 if "registedStatus" in user:
-                    if user["registedStatus"] == 1:
-                        documentNumber = only_numerics(data['entry'][0]['messaging'][0]["message"]["text"])
-                        msg = "verifica tu numero de identificación e intenta de nuevo"
-
-                        if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
-                            db.users.update({"id": user['id']},
-                                            {'$set': {"registedStatus": 2,
-                                                      "document": {"documentType": "cedula",
-                                                                   "documentNumber": documentNumber["numbers"]},
-                                                      "date-registedStatus": datetime.now()}})
-                            send_message(user["id"], "Listo! tu cedula fue registrada exitosamente")
-                            return "OK", 200
-
-                        if user["document"]["documentType"] == "passport" and documentNumber["rc"] != -500:
-                            db.users.update({"id": user['id']},
-                                            {'$set': {"registedStatus": 2,
-                                                      "document": {"documentType": "passport",
-                                                                   "documentNumber": documentNumber["numbers"]},
-                                                      "date-registedStatus": datetime.now()}})
-                            send_message(user["id"], "Gracias! ya pude guardar tu info")
-                            return "OK", 200
+                    save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
 
                 categories = classification(message, False, db)
                 log(categories)
@@ -117,11 +98,49 @@ def get_message():
                 send_message(user["id"],"indicame tu numero de identifcación")
                 return "OK", 200
 
+            if user["registedStatus"] == 2:
+                send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
+                options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
+                           {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
+                send_options(user["id"], options, "por donde prefieres recibirlo?")
+                return "OK", 200
+
             if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
                 send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
                 return "OK", 200
 
     return "OK", 200
+
+
+def save_user_information(user, message, db):
+    response = {"rc": 100, "msg": "Not related data found"}
+    if user["registedStatus"] == 1:
+        documentNumber = only_numerics(message)
+        if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
+            db.users.update({"id": user['id']},
+                            {'$set': {"registedStatus": 2,
+                                      "document": {"documentType": "cedula",
+                                                   "documentNumber": documentNumber["numbers"]},
+                                      "date-registedStatus": datetime.now()}})
+            send_message(user["id"], "Listo! tu cedula fue registrada exitosamente")
+            response = {"rc": 0, "msg": "Process OK"}
+
+        if user["document"]["documentType"] == "passport" and documentNumber["rc"] != -500:
+            db.users.update({"id": user['id']},
+                            {'$set': {"registedStatus": 2,
+                                      "document": {"documentType": "passport",
+                                                   "documentNumber": documentNumber["numbers"]},
+                                      "date-registedStatus": datetime.now()}})
+            send_message(user["id"], "Gracias! ya pude guardar tu info")
+
+        if response["rc"] == 0:
+            send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
+            options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
+                       {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
+            send_options(user["id"], options, "por donde prefieres recibirlo?")
+        return response
+
+    return response
 
 
 def generator(categories, db, user):
@@ -131,10 +150,12 @@ def generator(categories, db, user):
     global sms_body
 
     if "accept" in categories and "negative" not in categories:
-        message = "Gracias!"
+        message = ""
         if "tyc" not in user:
             user['tyc'] = 1
             db.users.update({"id": user['id']}, {'$set': {'tyc': 1, "date-tyc": datetime.now()}})
+            send_message(user["id"], "Gracias!")
+            send_operations(user["id"])
 
     if "tyc" not in user:
         return {"user": user, "msg": message}
@@ -279,7 +300,7 @@ def accept_tyc(recipient_id):
         "Content-Type": "application/json"
     }
     data = json.dumps({
-              "recipient":{
+              "recipient": {
                 "id": recipient_id
               },
               "message":{
@@ -315,7 +336,7 @@ def send_operations(recipient_id):
                            },
                            "message": {
                               "attachment": {
-                                 "type":"template",
+                                 "type": "template",
                                  "payload": {
                                     "template_type":"generic",
                                     "elements": [
