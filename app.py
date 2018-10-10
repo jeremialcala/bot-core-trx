@@ -54,7 +54,7 @@ def get_message():
             if "attachments" in data['entry'][0]['messaging'][0]["message"]:
                 attachment = data['entry'][0]['messaging'][0]["message"]["attachments"]
                 log(attachment)
-                if attachment["type"] == "location":
+                if attachment[0]["type"] == "location":
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 3,
                                               "location": {attachment["payload"]["coordinates"]},
