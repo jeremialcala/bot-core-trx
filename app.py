@@ -18,6 +18,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
+
 @app.route('/', methods=['GET'])
 def verify():
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
@@ -71,7 +72,9 @@ def get_message():
                 log(message)
 
                 if "registedStatus" in user:
-                    save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
+                    response = save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
+                    if response["rc"] == 0:
+                        return "OK", 200
 
                 categories = classification(message, False, db)
                 log(categories)
