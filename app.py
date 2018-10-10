@@ -11,6 +11,12 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+params = {
+    "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+}
+headers = {
+    "Content-Type": "application/json"
+}
 
 @app.route('/', methods=['GET'])
 def verify():
@@ -105,9 +111,16 @@ def get_message():
 
             if user["registedStatus"] == 2:
                 send_message(user["id"], "me gustaria conocer donde te encuentras")
-                options = [{"content_type": "location"},
-                           {}]
-                send_options(user["id"], options, "por donde prefieres recibirlo?")
+                data = json.dumps(  {
+                                      "recipient": {
+                                        "id": user["id"]
+                                      },
+                                      "message": {
+                                        "text": "me gustaria conocer donde te encuentras",
+                                        "quick_replies": [{"content_type": "location"}]
+                                      }
+                                    })
+                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
                 return "OK", 200
 
             if user["registedStatus"] == 3:
