@@ -79,6 +79,11 @@ def get_message():
                 send_operations(user["id"])
                 return "OK", 200
 
+            if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
+                send_message(user["id"], "Claro que si vamos a empezar")
+                send_operations(user["id"])
+                return "OK", 200
+
             if "registedStatus" not in user:
                 send_message(user["id"], "Primero tenemos que abrir una cuenta")
                 options = [{"content_type": "text", "title": "Si!, Registrame", "payload": "POSTBACK_PAYLOAD"},
@@ -95,13 +100,20 @@ def get_message():
 
             if user["registedStatus"] == 1:
                 send_message(user["id"], "Vamos a continuar tu afiliacion.")
-                send_message(user["id"],"indicame tu numero de identifcación")
+                send_message(user["id"], "indicame tu numero de identifcación")
                 return "OK", 200
 
             if user["registedStatus"] == 2:
-                send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
-                options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
-                           {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
+                send_message(user["id"], "me gustaria conocer donde te encuentras")
+                options = [{"content_type": "location"},
+                           {}]
+                send_options(user["id"], options, "por donde prefieres recibirlo?")
+                return "OK", 200
+
+            if user["registedStatus"] == 3:
+                send_message(user["id"], "para continuar nesecito enviarte un código de activación.")
+                options = [{"content_type": "text", "title": "SMS", "payload": "SMS_PAYLOAD"},
+                           {"content_type": "text", "title": "Correo", "payload": "EMAIL_PAYLOAD"}]
                 send_options(user["id"], options, "por donde prefieres recibirlo?")
                 return "OK", 200
 
@@ -176,6 +188,13 @@ def generator(categories, db, user):
                                           'document': {"documentType": get_document_type(categories)},
                                           "date-registedStatus": datetime.now()}})
                 message = "indicame tu numero de identifcación"
+
+        if user["registedStatus"] == 2:
+            if "sms" in categories:
+                db.users.update({"id": user['id']},
+                                {'$set': {"registedStatus": 3,
+                                          "date-registedStatus": datetime.now()}})
+                message = "indicame tu numero de celular"
 
     return {"user": user, "msg": message}
 
@@ -277,7 +296,7 @@ def send_options(recipient_id, options, text):
         "Content-Type": "application/json"
     }
     data = json.dumps({
-              "recipient":{
+              "recipient": {
                 "id": recipient_id
               },
               "message":{
