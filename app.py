@@ -51,6 +51,20 @@ def get_message():
                 user = document
 
         if "message" in messaging:
+            if "attachments" in data['entry'][0]['messaging'][0]["message"]:
+                attachment = data['entry'][0]['messaging'][0]["message"]["attachments"]
+                log(attachment)
+                if attachment["type"] == "location":
+                    db.users.update({"id": user['id']},
+                                    {'$set': {"registedStatus": 3,
+                                              "location": {attachment["payload"]["coordinates"]},
+                                              "date-location": datetime.now()}})
+                    send_message(user["id"], "Muchas gracias!")
+                    send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
+                    options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
+                               {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
+                    send_options(user["id"], options, "por donde prefieres recibirlo?")
+
             if "text" in data['entry'][0]['messaging'][0]["message"]:
                 message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                 log(message)
@@ -110,16 +124,17 @@ def get_message():
                 return "OK", 200
 
             if user["registedStatus"] == 2:
-                send_message(user["id"], "me gustaria conocer donde te encuentras")
-                data = json.dumps(  {
-                                      "recipient": {
+                data = json.dumps({
+                                    "recipient": {
                                         "id": user["id"]
-                                      },
-                                      "message": {
+                                    },
+                                    "message": {
                                         "text": "me gustaria conocer donde te encuentras",
-                                        "quick_replies": [{"content_type": "location"}]
-                                      }
-                                    })
+                                        "quick_replies": [{
+                                            "content_type": "location"
+                                        }]
+                                    }
+                                  })
                 requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
                 return "OK", 200
 
@@ -157,12 +172,21 @@ def save_user_information(user, message, db):
                                                    "documentNumber": documentNumber["numbers"]},
                                       "date-registedStatus": datetime.now()}})
             send_message(user["id"], "Gracias! ya pude guardar tu info")
+            response = {"rc": 0, "msg": "Process OK"}
 
         if response["rc"] == 0:
-            send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
-            options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
-                       {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
-            send_options(user["id"], options, "por donde prefieres recibirlo?")
+            data = json.dumps({
+                                "recipient": {
+                                    "id": user["id"]
+                                },
+                                "message": {
+                                    "text": "me gustaria conocer donde te encuentras",
+                                    "quick_replies": [{
+                                        "content_type": "location"
+                                    }]
+                                }
+                              })
+            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
         return response
 
     return response
