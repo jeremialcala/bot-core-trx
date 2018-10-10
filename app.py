@@ -55,9 +55,10 @@ def get_message():
                 attachment = data['entry'][0]['messaging'][0]["message"]["attachments"]
                 log(attachment)
                 if attachment[0]["type"] == "location":
+                    location = json.loads(json.dumps(attachment[0]["payload"]["coordinates"]))
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 3,
-                                              "location": json.dumps(attachment[0]["payload"]["coordinates"]),
+                                              "location": location,
                                               "date-location": datetime.now()}})
                     send_message(user["id"], "Muchas gracias!")
                     send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
