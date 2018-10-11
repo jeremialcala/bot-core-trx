@@ -4,10 +4,12 @@ import os
 import sys
 import re
 from datetime import datetime
-
+from twilio.rest import Client
 import pymongo
 import requests
 from flask import Flask, request
+from random import randint
+
 
 app = Flask(__name__)
 
@@ -198,8 +200,34 @@ def save_user_information(user, message, db):
                               })
             requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
         return response
+    if user["registedStatus"] == 4:
+        cellphone = only_numerics(message)
+        if cellphone["rc"] == 0:
+            result = db.country.find({"name": user["location"]["Address"]["Country"]})
+            if result.count() is not 0:
+                for document in result:
+                    country = document
+                    confirmation = random_with_N_digits(5)
+                    client = Client(os.environ["ACCOUNT_ID"], os.environ["AUTH_TOKEN"])
+                    message = client.messages.create(
+                        from_=os.environ["SMS_ORI"],
+                        to= country["code"] + cellphone["numbers"],
+                        body="Hola, gracias por tu solicitud. Tu código de confirnación es: " + str(confirmation)
+                    )
+                    db.users.update({"id": user['id']},
+                                    {'$set': {"registedStatus": 5,
+                                              "cellphone": country["code"] + cellphone["numbers"],
+                                              "confirmation": confirmation,
+                                              "date-cellphone": datetime.now()}})
+
 
     return response
+
+
+def random_with_N_digits(n):
+    range_start = 10 ** (n - 1)
+    range_end = (10 ** n) - 1
+    return randint(range_start, range_end)
 
 
 def generator(categories, db, user):
