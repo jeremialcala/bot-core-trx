@@ -59,7 +59,7 @@ def get_message():
                     location = json.loads(json.dumps(attachment[0]["payload"]["coordinates"]))
                     app_id = os.environ["APP_ID"]
                     app_code = os.environ["APP_CODE"]
-                    here_url = os.environ["REVERSEGEOCODE"] + "prox=" + location["lat"] + "," + location["long"]
+                    here_url = os.environ["REVERSEGEOCODE"] + "prox=" + str(location["lat"]) + "," + str(location["long"])
                     here_url += "&mode=retrieveAddresses&maxresults=1&gen=9&app_id=" + app_id + "&app_code=" + app_code
                     r = requests.get(here_url)
                     here = json.loads(r.text)
