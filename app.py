@@ -63,10 +63,9 @@ def get_message():
                     here_url += "&mode=retrieveAddresses&maxresults=1&gen=9&app_id=" + app_id + "&app_code=" + app_code
                     r = requests.get(here_url)
                     here = json.loads(r.text)
-                    log(here["Response"]["View"][0]["Result"][0]["Location"])
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 3,
-                                              "location": location,
+                                              "location": here["Response"]["View"][0]["Result"][0]["Location"],
                                               "date-location": datetime.now()}})
                     send_message(user["id"], "Muchas gracias!")
                     send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
