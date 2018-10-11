@@ -57,6 +57,13 @@ def get_message():
                 log(attachment)
                 if attachment[0]["type"] == "location":
                     location = json.loads(json.dumps(attachment[0]["payload"]["coordinates"]))
+                    app_id = os.environ["APP_ID"]
+                    app_code = os.environ["APP_CODE"]
+                    here_url = os.environ["REVERSEGEOCODE"] + "prox=" + location["lat"] + "," + location["long"]
+                    here_url += "&mode=retrieveAddresses&maxresults=1&gen=9&app_id=" + app_id + "&app_code=" + app_code
+                    r = requests.get(here_url)
+                    here = json.loads(r.text)
+                    log(here["Response"]["View"][0]["Location"])
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 3,
                                               "location": location,
@@ -233,7 +240,7 @@ def generator(categories, db, user):
         if user["registedStatus"] == 2:
             if "sms" in categories:
                 db.users.update({"id": user['id']},
-                                {'$set': {"registedStatus": 3,
+                                {'$set': {"registedStatus": 4,
                                           "date-registedStatus": datetime.now()}})
                 message = "indicame tu numero de celular"
 
