@@ -236,7 +236,7 @@ def generator(categories, db, user):
                                           "date-registedStatus": datetime.now()}})
                 message = "indicame tu numero de identifcación"
 
-        if user["registedStatus"] == 2:
+        if user["registedStatus"] == 3:
             if "sms" in categories:
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 4,
