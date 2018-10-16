@@ -71,7 +71,7 @@ def get_message():
                                               "location": here["Response"]["View"][0]["Result"][0]["Location"],
                                               "date-location": datetime.now()}})
                     send_message(user["id"], "Muchas gracias!")
-                    send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
+                    send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
                     options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
                                {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
                     send_options(user["id"], options, "por donde prefieres recibirlo?")
@@ -152,7 +152,7 @@ def get_message():
                 return "OK", 200
 
             if user["registedStatus"] == 3:
-                send_message(user["id"], "para continuar nesecito enviarte un código de activación.")
+                send_message(user["id"], "para continuar necesito enviarte un código de activación.")
                 options = [{"content_type": "text", "title": "SMS", "payload": "SMS_PAYLOAD"},
                            {"content_type": "text", "title": "Correo", "payload": "EMAIL_PAYLOAD"}]
                 send_options(user["id"], options, "por donde prefieres recibirlo?")
@@ -231,15 +231,16 @@ def save_user_information(user, message, db):
     if user["registedStatus"] == 5:
         confirmation = only_numerics(message)
         if confirmation["rc"] == 0:
-            confirmationTime = datetime.now() - datetime.now()
+            confirmationTime = user["date-confirmation"] - datetime.now()
             if confirmationTime.seconds > 180:
                 send_message(user["id"], "El código ya expiro. ")
-                send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
+                send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
                 options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
                            {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
                 send_options(user["id"], options, "por donde prefieres recibirlo?")
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 3, "date-registedStatus": datetime.now()}})
+                return response
 
             if user[confirmation] == confirmation["numbers"]:
                 db.users.update({"id": user['id']},
