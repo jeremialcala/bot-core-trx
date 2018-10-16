@@ -245,7 +245,7 @@ def save_user_information(user, message, db):
                                 {'$set': {"registedStatus": 3, "date-registedStatus": datetime.now()}})
                 return response
             log(user["confirmation"])
-            if user["confirmation"] == confirmation["numbers"]:
+            if str(user["confirmation"]) == confirmation["numbers"]:
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
                 send_message(user["id"], "Muy bien! vamos a registrarte una cuenta.")
