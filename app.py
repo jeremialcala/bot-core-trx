@@ -232,8 +232,8 @@ def save_user_information(user, message, db):
         confirmation = only_numerics(message)
         if confirmation["rc"] == 0:
             response = {"rc": 0, "msg": "Process OK"}
-            confirmationTime = user["date-confirmation"] - datetime.now()
-            log(confirmationTime)
+            confirmationTime = datetime.now() - user["date-confirmation"]
+            log(confirmationTime.seconds)
             if confirmationTime.seconds > 180:
                 send_message(user["id"], "El código ya expiro. ")
                 send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
