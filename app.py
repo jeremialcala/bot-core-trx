@@ -211,12 +211,14 @@ def save_user_information(user, message, db):
                     country = document
                     confirmation = random_with_n_digits(5)
                     client = Client(os.environ["ACCOUNT_ID"], os.environ["AUTH_TOKEN"])
+                    response = {"rc": 0, "msg": "Process OK"}
                     message = client.messages.create(
                         from_=os.environ["SMS_ORI"],
                         to=country["code"] + cellphone["numbers"],
                         body="Hola, gracias por tu solicitud. Tu código de confirnación es: " + str(confirmation)
                     )
-                    send_message(user["id"], "Muy bien! Te acabo de enviar el código a tu celular, me lo indicas por favor.")
+                    send_message(user["id"],
+                                 "Muy bien! Te acabo de enviar el código a tu celular, me lo indicas por favor.")
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 5,
                                               "date-registedStatus": datetime.now(),
@@ -224,6 +226,7 @@ def save_user_information(user, message, db):
                                               "date-confirmation": datetime.now(),
                                               "confirmation": confirmation,
                                               "date-cellphone": datetime.now()}})
+        return response
 
     if user["registedStatus"] == 5:
         confirmation = only_numerics(message)
@@ -237,6 +240,7 @@ def save_user_information(user, message, db):
                 send_options(user["id"], options, "por donde prefieres recibirlo?")
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 3, "date-registedStatus": datetime.now()}})
+
             if user[confirmation] == confirmation["numbers"]:
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
@@ -244,6 +248,7 @@ def save_user_information(user, message, db):
 
             else:
                 send_message(user["id"], "El código que me indicas no es correcto")
+        return response
 
     return response
 
