@@ -215,7 +215,7 @@ def save_user_information(user, message, db):
                     message = client.messages.create(
                         from_=os.environ["SMS_ORI"],
                         to=country["code"] + cellphone["numbers"],
-                        body="Hola, gracias por tu solicitud. Tu código de confirnación es: " + str(confirmation)
+                        body="Tu clave de temporal es: " + str(confirmation)
                     )
                     send_message(user["id"],
                                  "Muy bien! Te acabo de enviar el código a tu celular, me lo indicas por favor.")
@@ -234,6 +234,7 @@ def save_user_information(user, message, db):
             response = {"rc": 0, "msg": "Process OK"}
             confirmationTime = datetime.now() - user["date-confirmation"]
             log(confirmationTime.seconds)
+
             if confirmationTime.seconds > 180:
                 send_message(user["id"], "El código ya expiro. ")
                 send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
@@ -244,10 +245,11 @@ def save_user_information(user, message, db):
                                 {'$set': {"registedStatus": 3, "date-registedStatus": datetime.now()}})
                 return response
 
-            if user[confirmation] == confirmation["numbers"]:
+            if user["confirmation"] == confirmation["numbers"]:
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
                 send_message(user["id"], "Muy bien! vamos a registrarte una cuenta.")
+                return response
 
             else:
                 send_message(user["id"], "El código que me indicas no es correcto")
