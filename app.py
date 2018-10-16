@@ -67,6 +67,7 @@ def get_message():
                     here = json.loads(r.text)
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 3,
+                                              "date-registedStatus": datetime.now(),
                                               "location": here["Response"]["View"][0]["Result"][0]["Location"],
                                               "date-location": datetime.now()}})
                     send_message(user["id"], "Muchas gracias!")
@@ -200,6 +201,7 @@ def save_user_information(user, message, db):
                               })
             requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
         return response
+
     if user["registedStatus"] == 4:
         cellphone = only_numerics(message)
         if cellphone["rc"] == 0:
@@ -207,24 +209,46 @@ def save_user_information(user, message, db):
             if result.count() is not 0:
                 for document in result:
                     country = document
-                    confirmation = random_with_N_digits(5)
+                    confirmation = random_with_n_digits(5)
                     client = Client(os.environ["ACCOUNT_ID"], os.environ["AUTH_TOKEN"])
                     message = client.messages.create(
                         from_=os.environ["SMS_ORI"],
-                        to= country["code"] + cellphone["numbers"],
+                        to=country["code"] + cellphone["numbers"],
                         body="Hola, gracias por tu solicitud. Tu código de confirnación es: " + str(confirmation)
                     )
+                    send_message(user["id"], "Muy bien! Te acabo de enviar el código a tu celular, me lo indicas por favor.")
                     db.users.update({"id": user['id']},
                                     {'$set': {"registedStatus": 5,
+                                              "date-registedStatus": datetime.now(),
                                               "cellphone": country["code"] + cellphone["numbers"],
+                                              "date-confirmation": datetime.now(),
                                               "confirmation": confirmation,
                                               "date-cellphone": datetime.now()}})
 
+    if user["registedStatus"] == 5:
+        confirmation = only_numerics(message)
+        if confirmation["rc"] == 0:
+            confirmationTime = datetime.now() - datetime.now()
+            if confirmationTime.seconds > 180:
+                send_message(user["id"], "El código ya expiro. ")
+                send_message(user["id"], "para continuar nesecito enviarte un codigo de activación.")
+                options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
+                           {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
+                send_options(user["id"], options, "por donde prefieres recibirlo?")
+                db.users.update({"id": user['id']},
+                                {'$set': {"registedStatus": 3, "date-registedStatus": datetime.now()}})
+            if user[confirmation] == confirmation["numbers"]:
+                db.users.update({"id": user['id']},
+                                {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
+                send_message(user["id"], "Muy bien! vamos a registrarte una cuenta.")
+
+            else:
+                send_message(user["id"], "El código que me indicas no es correcto")
 
     return response
 
 
-def random_with_N_digits(n):
+def random_with_n_digits(n):
     range_start = 10 ** (n - 1)
     range_end = (10 ** n) - 1
     return randint(range_start, range_end)
