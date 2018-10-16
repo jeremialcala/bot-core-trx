@@ -244,7 +244,7 @@ def save_user_information(user, message, db):
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 3, "date-registedStatus": datetime.now()}})
                 return response
-
+            log(user["confirmation"])
             if user["confirmation"] == confirmation["numbers"]:
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
