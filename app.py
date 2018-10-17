@@ -34,135 +34,138 @@ def verify():
 def get_message():
     data = request.get_json()
     log(data)
+    try:
+        if "messaging" in data['entry'][0]:
+            messaging = data['entry'][0]['messaging'][0]
+            user_id = data['entry'][0]['messaging'][0]['sender']['id']
+            user = json.loads(get_user_by_id(user_id))
+            if "error" in user:
+                log("Error usuario no encontrado")
+                return "OK", 200
 
-    if "messaging" in data['entry'][0]:
-        messaging = data['entry'][0]['messaging'][0]
-        user_id = data['entry'][0]['messaging'][0]['sender']['id']
-        user = json.loads(get_user_by_id(user_id))
-        if "error" in user:
-            log("Error usuario no encontrado")
-            return "OK", 200
+            db = get_mongodb()
+            result = db.users.find({'id': user_id})
+            msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
 
-        db = get_mongodb()
-        result = db.users.find({'id': user_id})
-        msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
+            if result.count() is 0:
+                db.users.insert_one(user)
+            else:
+                for document in result:
+                    user = document
 
-        if result.count() is 0:
-            db.users.insert_one(user)
-        else:
-            for document in result:
-                user = document
+            if "message" in messaging:
+                if "attachments" in data['entry'][0]['messaging'][0]["message"]:
+                    attachment = data['entry'][0]['messaging'][0]["message"]["attachments"]
+                    log(attachment)
+                    if attachment[0]["type"] == "location":
+                        location = json.loads(json.dumps(attachment[0]["payload"]["coordinates"]))
+                        app_id = os.environ["APP_ID"]
+                        app_code = os.environ["APP_CODE"]
+                        here_url = os.environ["REVERSEGEOCODE"] + "prox=" + str(location["lat"]) + "," + str(location["long"])
+                        here_url += "&mode=retrieveAddresses&maxresults=1&gen=9&app_id=" + app_id + "&app_code=" + app_code
+                        r = requests.get(here_url)
+                        here = json.loads(r.text)
+                        db.users.update({"id": user['id']},
+                                        {'$set': {"registedStatus": 3,
+                                                  "date-registedStatus": datetime.now(),
+                                                  "location": here["Response"]["View"][0]["Result"][0]["Location"],
+                                                  "date-location": datetime.now()}})
+                        send_message(user["id"], "Muchas gracias!")
+                        send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
+                        options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
+                                   {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
+                        send_options(user["id"], options, "por donde prefieres recibirlo?")
 
-        if "message" in messaging:
-            if "attachments" in data['entry'][0]['messaging'][0]["message"]:
-                attachment = data['entry'][0]['messaging'][0]["message"]["attachments"]
-                log(attachment)
-                if attachment[0]["type"] == "location":
-                    location = json.loads(json.dumps(attachment[0]["payload"]["coordinates"]))
-                    app_id = os.environ["APP_ID"]
-                    app_code = os.environ["APP_CODE"]
-                    here_url = os.environ["REVERSEGEOCODE"] + "prox=" + str(location["lat"]) + "," + str(location["long"])
-                    here_url += "&mode=retrieveAddresses&maxresults=1&gen=9&app_id=" + app_id + "&app_code=" + app_code
-                    r = requests.get(here_url)
-                    here = json.loads(r.text)
-                    db.users.update({"id": user['id']},
-                                    {'$set': {"registedStatus": 3,
-                                              "date-registedStatus": datetime.now(),
-                                              "location": here["Response"]["View"][0]["Result"][0]["Location"],
-                                              "date-location": datetime.now()}})
-                    send_message(user["id"], "Muchas gracias!")
-                    send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
-                    options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
-                               {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
-                    send_options(user["id"], options, "por donde prefieres recibirlo?")
+                if "text" in data['entry'][0]['messaging'][0]["message"]:
+                    message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
+                    log(message)
 
-            if "text" in data['entry'][0]['messaging'][0]["message"]:
-                message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
-                log(message)
+                    if "registedStatus" in user:
+                        response = save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
+                        if response["rc"] == 0:
+                            return "OK", 200
 
-                if "registedStatus" in user:
-                    response = save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
-                    if response["rc"] == 0:
+                    categories = classification(message, False, db)
+                    log(categories)
+                    response = generator(categories, db, user)
+                    log(response)
+                    user = response["user"]
+                    send_message(user["id"], response["msg"])
+
+                    if "tyc" not in user:
+                        send_termandc(user["id"])
+                        accept_tyc(user["id"])
                         return "OK", 200
 
-                categories = classification(message, False, db)
-                log(categories)
-                response = generator(categories, db, user)
-                log(response)
-                user = response["user"]
-                send_message(user["id"], response["msg"])
+                    if "greet" in categories:
+                        send_operations(user["id"])
 
+            if "postback" in messaging:
                 if "tyc" not in user:
+                    send_message(user["id"], msg)
                     send_termandc(user["id"])
                     accept_tyc(user["id"])
                     return "OK", 200
 
-                if "greet" in categories:
+                if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
+                    send_message(user["id"], "Claro que si vamos a empezar")
                     send_operations(user["id"])
+                    return "OK", 200
 
-        if "postback" in messaging:
-            if "tyc" not in user:
-                send_message(user["id"], msg)
-                send_termandc(user["id"])
-                accept_tyc(user["id"])
-                return "OK", 200
+                if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
+                    send_message(user["id"], "Claro que si vamos a empezar")
+                    send_operations(user["id"])
+                    return "OK", 200
 
-            if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
-                send_message(user["id"], "Claro que si vamos a empezar")
-                send_operations(user["id"])
-                return "OK", 200
+                if "registedStatus" not in user:
+                    send_message(user["id"], "Primero tenemos que abrir una cuenta")
+                    options = [{"content_type": "text", "title": "Si!, Registrame", "payload": "POSTBACK_PAYLOAD"},
+                               {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
+                    send_options(user["id"], options, "te gustaria iniciar el proceso?")
+                    return "OK", 200
 
-            if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
-                send_message(user["id"], "Claro que si vamos a empezar")
-                send_operations(user["id"])
-                return "OK", 200
+                if user["registedStatus"] == 0:
+                    send_message(user["id"], "Aun no terminas tu registro...")
+                    options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
+                               {"content_type": "text", "title": "Pasaporte", "payload": "GET_STARTED_PAYLOAD"}]
+                    send_options(user["id"], options, "que tipo de documento tienes?")
+                    return "OK", 200
 
-            if "registedStatus" not in user:
-                send_message(user["id"], "Primero tenemos que abrir una cuenta")
-                options = [{"content_type": "text", "title": "Si!, Registrame", "payload": "POSTBACK_PAYLOAD"},
-                           {"content_type": "text", "title": "No por ahora", "payload": "GET_STARTED_PAYLOAD"}]
-                send_options(user["id"], options, "te gustaria iniciar el proceso?")
-                return "OK", 200
+                if user["registedStatus"] == 1:
+                    send_message(user["id"], "Vamos a continuar tu afiliacion.")
+                    send_message(user["id"], "indicame tu numero de identifcación")
+                    return "OK", 200
 
-            if user["registedStatus"] == 0:
-                send_message(user["id"], "Aun no terminas tu registro...")
-                options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
-                           {"content_type": "text", "title": "Pasaporte", "payload": "GET_STARTED_PAYLOAD"}]
-                send_options(user["id"], options, "que tipo de documento tienes?")
-                return "OK", 200
+                if user["registedStatus"] == 2:
+                    data = json.dumps({
+                                        "recipient": {
+                                            "id": user["id"]
+                                        },
+                                        "message": {
+                                            "text": "me gustaria conocer donde te encuentras",
+                                            "quick_replies": [{
+                                                "content_type": "location"
+                                            }]
+                                        }
+                                      })
+                    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+                    return "OK", 200
 
-            if user["registedStatus"] == 1:
-                send_message(user["id"], "Vamos a continuar tu afiliacion.")
-                send_message(user["id"], "indicame tu numero de identifcación")
-                return "OK", 200
+                if user["registedStatus"] == 3:
+                    send_message(user["id"], "para continuar necesito enviarte un código de activación.")
+                    options = [{"content_type": "text", "title": "SMS", "payload": "SMS_PAYLOAD"},
+                               {"content_type": "text", "title": "Correo", "payload": "EMAIL_PAYLOAD"}]
+                    send_options(user["id"], options, "por donde prefieres recibirlo?")
+                    return "OK", 200
 
-            if user["registedStatus"] == 2:
-                data = json.dumps({
-                                    "recipient": {
-                                        "id": user["id"]
-                                    },
-                                    "message": {
-                                        "text": "me gustaria conocer donde te encuentras",
-                                        "quick_replies": [{
-                                            "content_type": "location"
-                                        }]
-                                    }
-                                  })
-                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-                return "OK", 200
+                if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
+                    send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
+                    return "OK", 200
 
-            if user["registedStatus"] == 3:
-                send_message(user["id"], "para continuar necesito enviarte un código de activación.")
-                options = [{"content_type": "text", "title": "SMS", "payload": "SMS_PAYLOAD"},
-                           {"content_type": "text", "title": "Correo", "payload": "EMAIL_PAYLOAD"}]
-                send_options(user["id"], options, "por donde prefieres recibirlo?")
-                return "OK", 200
-
-            if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
-                send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
-                return "OK", 200
-
-    return "OK", 200
+        return "OK", 200
+    except Exception as e:
+        log(e.args)
+        return "OK", 200
 
 
 def save_user_information(user, message, db):
