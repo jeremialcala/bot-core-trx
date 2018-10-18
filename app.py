@@ -7,9 +7,9 @@ from datetime import datetime
 from twilio.rest import Client
 import pymongo
 import requests
-from flask import Flask, request
+from flask import Flask, request, send_file
 from random import randint
-
+import urllib.request
 
 app = Flask(__name__)
 
@@ -49,6 +49,7 @@ def get_message():
 
             if result.count() is 0:
                 db.users.insert_one(user)
+                urllib.request.urlretrieve(user["profile_pic"], "profile/" + user["id"] + ".jpg")
             else:
                 for document in result:
                     user = document
@@ -166,6 +167,16 @@ def get_message():
     except Exception as e:
         log(e.args)
         return "OK", 200
+
+
+@app.route('/images', methods=['GET'])
+def get_image():
+    try:
+        image = request.args.get('file')
+        return send_file(image, mimetype='image/gif')
+    except Exception as e:
+        print("Error: " + str(e.args))
+        return "NOT FOUND", 404
 
 
 def save_user_information(user, message, db):
