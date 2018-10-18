@@ -49,7 +49,9 @@ def get_message():
 
             if result.count() is 0:
                 db.users.insert_one(user)
-                urllib.request.urlretrieve(user["profile_pic"], "profile/" + user["id"] + ".jpg")
+                pic_profile = "profile/" + user["id"] + ".jpg"
+                log(pic_profile)
+                urllib.request.urlretrieve(user["profile_pic"], pic_profile)
             else:
                 for document in result:
                     user = document
