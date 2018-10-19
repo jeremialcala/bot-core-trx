@@ -379,7 +379,9 @@ def user_origination(user, db):
 
 
 def np_api_request(url, data, api_headers, api_params=None):
-    api_response = requests.post(url, params=api_params, headers=api_headers, data=data)
+    log("Conectando a: " + url)
+    log("Data:" + json.dumps(data))
+    api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
     if api_response.status_code == 401:
         get_oauth_token()
         np_api_request(url, data, api_headers, api_params)
