@@ -19,7 +19,7 @@ params = {
 headers = {
     "Content-Type": "application/json"
 }
-global np_oauth_token
+
 objects = []
 
 
@@ -36,6 +36,8 @@ def verify():
 def get_message():
     data = request.get_json()
     log(data)
+    global np_oauth_token
+    np_oauth_token = "cfa08a760590b543c7cae2796c822ac4"
     try:
         if "messaging" in data['entry'][0]:
             messaging = data['entry'][0]['messaging'][0]
@@ -708,7 +710,6 @@ def get_mongodb():
 
 
 if __name__ == '__main__':
-    np_oauth_token = get_oauth_token()
     log(np_oauth_token)
     app.run(debug=True)
 
