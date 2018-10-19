@@ -220,7 +220,7 @@ def get_user_by_name(name, operation, db):
         for friend in result:
             elements["title"] = friend["first_name"] + " " + friend["last_name"]
             elements["subtitle"] = friend["cellphone"]
-            elements["image_url"] = image_url + "?file=" + friend["id"] + ".jpg"
+            elements["image_url"] = image_url + "?file=profile/" + friend["id"] + ".jpg"
             buttons["title"] = "Enviar Dinero"
             buttons["type"] = "postback"
             buttons["payload"] = operation + "|" + friend["id"]
