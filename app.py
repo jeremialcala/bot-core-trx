@@ -136,6 +136,11 @@ def get_message():
                     send_operations(user["id"])
                     return "OK", 200
 
+                if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
+                    if user["registedStatus"] == 6:
+                        get_user_balance(user, db)
+                        return "OK", 200
+
                 if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
                     send_message(user["id"], "Claro que si vamos a empezar")
                     send_operations(user["id"])
@@ -383,10 +388,34 @@ def user_origination(user, db):
         return api_response.text, api_response.status_code
 
 
-def np_api_request(url, data, api_headers, api_params=None):
+def get_user_balance(user, db):
+    account = db.accountPool.find_one({"_id": user["accountId"]})
+    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
+          + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
+          + "?trxid=" + str(random_with_n_digits(10))
+    api_headers = {"x-country": "Usd",
+                   "language": "es",
+                   "channel": "API",
+                   "accept": "application/json",
+                   "Content-Type": "application/json",
+                   "Authorization": "Bearer $OAUTH2TOKEN$"}
+
+    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
+    api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
+    if api_response.status_code == 200:
+        return "OK", 200
+    else:
+        send_message(user["id"], "En estos momentos no pude procesar tu operación.")
+
+
+def np_api_request(url, data, api_headers, api_params=None, http_method=None):
     log("Conectando a: " + url)
     log("Data:" + json.dumps(data))
-    api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
+    if http_method is "GET":
+        api_response = requests("GET", url, headers=api_headers)
+    else:
+        api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
+
     log("response: " + api_response.text)
     log("status_code: " + str(api_response.status_code))
     if api_response.status_code == 401:
@@ -410,6 +439,7 @@ def get_oauth_token():
     url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
     api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
     log(api_response.text)
+
     if api_response.status_code == 200:
         credentials = json.loads(api_response.text)
         return credentials["accessToken"]
@@ -423,7 +453,7 @@ def get_user_document_type(user):
 
 
 def get_account_from_pool(db):
-    criteria ={"codMisc": "SA"}
+    criteria = {"codMisc": "SA"}
     return db.accountPool.find_one(criteria)
 
 
