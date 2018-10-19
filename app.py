@@ -356,6 +356,8 @@ def user_origination(user, db):
     data["phone-1"] = user["cellphone"]
     data["address-2"] = user["location"]["Address"]["Label"]
 
+    log("Data: " + json.dumps(data))
+
     api_headers = {"x-country": "Usd",
                    "language": "es",
                    "channel": "API",
@@ -365,7 +367,7 @@ def user_origination(user, db):
 
     api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_ouath_token)
 
-    api_params = {"trxid=" + random_with_n_digits(10)}
+    api_params = {"trxid=" + str(random_with_n_digits(10))}
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] + account["indx"] + "/employee"
     api_response = np_api_request(url=url, data=data, api_headers=api_headers, api_params=api_params)
     if api_response.status_code == 200:
@@ -416,6 +418,7 @@ def get_user_document_type(user):
 def get_account_from_pool(db):
     criteria ={"codMisc": "SA"}
     return db.accountPool.find_one(criteria)
+
 
 def random_with_n_digits(n):
     range_start = 10 ** (n - 1)
@@ -701,5 +704,6 @@ def get_mongodb():
 
 if __name__ == '__main__':
     get_oauth_token()
+    log(np_ouath_token)
     app.run(debug=True)
 
