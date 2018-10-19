@@ -19,7 +19,7 @@ params = {
 headers = {
     "Content-Type": "application/json"
 }
-np_ouath_token = "cfa08a760590b543c7cae2796c822ac4"
+np_ouath_token = "bdb071ffb50ac2a3332c58c9d11c6399"
 objects = []
 
 
@@ -387,7 +387,7 @@ def np_api_request(url, data, api_headers, api_params=None):
     log("status_code: " + str(api_response.status_code))
     if api_response.status_code == 401:
         get_oauth_token()
-        # np_api_request(url, data, api_headers, api_params)
+        np_api_request(url, data, api_headers, api_params)
     else:
         return api_response
 
