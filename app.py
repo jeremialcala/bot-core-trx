@@ -374,10 +374,10 @@ def user_origination(user, db):
 
     api_response = np_api_request(url=url, data=data, api_headers=api_headers)
     if api_response.status_code == 200:
-        db.accountPool.update({"_id": account["_id"]},
-                              {"codMisc": "AF"})
+        db.accountPool.update({"_id": str(account["_id"])},
+                              {'$set': {"codMisc": "AF"}})
         db.users.update({"id": user["id"]},
-                        {"accountId": account["_id"]})
+                        {'$set': {"accountId": account["_id"]}})
         return "OK", 200, account
     else:
         return api_response.text, api_response.status_code
