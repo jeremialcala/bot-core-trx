@@ -356,8 +356,6 @@ def user_origination(user, db):
     data["phone-1"] = user["cellphone"]
     data["address-2"] = user["location"]["Address"]["Label"]
 
-    log("Data: " + json.dumps(data))
-
     api_headers = {"x-country": "Usd",
                    "language": "es",
                    "channel": "API",
@@ -384,6 +382,7 @@ def np_api_request(url, data, api_headers, api_params=None):
     log("Conectando a: " + url)
     log("Data:" + json.dumps(data))
     api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
+    log("response: " + api_response.text)
     if api_response.status_code == 401:
         get_oauth_token()
         np_api_request(url, data, api_headers, api_params)
