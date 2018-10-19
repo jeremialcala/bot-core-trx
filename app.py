@@ -96,6 +96,7 @@ def get_message():
                                 recipient = {"id": user["id"]}
                                 rsp_message = {"attachment": attachment}
                                 data = {"recipient": recipient, "message": rsp_message}
+                                log(data)
                                 requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                                               headers=headers, data=json.dumps(data))
                                 return "OK", 200
@@ -206,7 +207,7 @@ def get_user_by_name(name, operation, db):
     else:
         criteria = {"first_name": {"$regex": name[0]}}
     log(criteria)
-    image_url = os.environ["APP_ID"]
+    image_url = os.environ["IMAGES_URL"]
     result = db.users.find(criteria)
     elements = {"buttons": []}
     buttons = {}
