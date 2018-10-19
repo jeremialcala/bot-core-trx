@@ -408,8 +408,8 @@ def get_oauth_token():
     api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
     log(api_response.text)
     if api_response.status_code == 200:
-        crentials = json.loads(api_response.text)
-        np_ouath_token = crentials["access_token"]
+        credentials = json.loads(api_response.text)
+        np_ouath_token = credentials["accessToken"]
 
 
 def get_user_document_type(user):
