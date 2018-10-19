@@ -49,15 +49,20 @@ if __name__ == '__main__':
                        "Authorization": "Bearer $OAUTH2TOKEN$"}
         api_params = {"trxid=" + "1234567890"}
         url = "http://72.46.255.110:8008/ceoapi/1.0/11/employee?trxid=1234567890"
-        api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
-        print("response: " + api_response.text)
-
+        # api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
+        # print("response: " + api_response.text)
+        criteria = {"id": "1752570331535883"}
+        user = db.users.find_one(criteria)
+        print(user)
+        account = db.accountPool.find_one({"_id": user["accountId"]})
         # result = db.accountPool.find_one(criteria)
+        # db.accountPool.update({"_id": result["_id"]},
+        #                    {"codMisc": "AF"})
         # criteria = {"first_name": {"$regex": names[0]}}
         # result = db.users.find(criteria)
-        # print(result)
+        print(account)
         # for object in result:
-        #    print(object)
+        #    print(object[0])
         # app.run(debug=True)
         # urllib.request.urlretrieve(URL, "profile/pic.jpg")
         # for line in open('accountPool.txt'):

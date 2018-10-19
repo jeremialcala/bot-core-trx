@@ -405,7 +405,7 @@ def get_user_balance(user, db):
         attachment = {"type": "template"}
         payload = {"template_type": "generic", "elements": []}
         balance = json.dumps(api_response.text)
-        elements = {"buttons": [], "title": "Tarjeta: " + balance["card-number"],
+        elements = {"title": "Tarjeta: " + balance["card-number"],
                     "subtitle": "available-balance: " + balance["available-balance"],
                     "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}
         payload["elements"].append(elements)
@@ -420,9 +420,9 @@ def get_user_balance(user, db):
     else:
         attachment = {"type": "template"}
         payload = {"template_type": "generic", "elements": []}
-        elements = {"buttons": [], "title": "En estos momentos no pude procesar tu operación.",
+        elements = {"title": "En estos momentos no pude procesar tu operación.",
                     "subtitle": "available-balance: 0.00",
-                    "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}
+                    "image_url": image_url + "?file=products/Tarjeta-Plata_NB.png"}
         payload["elements"].append(elements)
         attachment["payload"] = payload
         recipient = {"id": user["id"]}
@@ -431,7 +431,7 @@ def get_user_balance(user, db):
         log(data)
         requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                       headers=headers, data=json.dumps(data))
-        send_message(user["id"], "En estos momentos no pude procesar tu operación.")
+        # send_message(user["id"], "En estos momentos no pude procesar tu operación.")
         return "OK", 200
 
 
