@@ -206,13 +206,14 @@ def get_user_by_name(name, operation, db):
         criteria = {"first_name": {"$regex": names[0]}, "last_name": {"$regex": names[1]}}
     else:
         criteria = {"first_name": {"$regex": names[0]}}
+    log(criteria)
     image_url = os.environ["APP_ID"]
     result = db.users.find(criteria)
     elements = {"buttons": []}
     buttons = {}
     attachment = {"type": "template"}
     payload = {"template_type": "gereric", "elements": []}
-
+    log(result.count())
     if result.count() is 0:
         return "No se encontraron usuarios", 404
     else:
