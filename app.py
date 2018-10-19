@@ -19,7 +19,7 @@ params = {
 headers = {
     "Content-Type": "application/json"
 }
-np_ouath_token = "cfa08a760590b543c7cae2796c822ac4"
+global np_oauth_token
 objects = []
 
 
@@ -365,7 +365,7 @@ def user_origination(user, db):
                    "Content-Type": "application/json",
                    "Authorization": "Bearer $OAUTH2TOKEN$"}
 
-    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_ouath_token)
+    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
 
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
           + account["indx"] + "/employee?trxid=" + str(random_with_n_digits(10))
@@ -388,7 +388,8 @@ def np_api_request(url, data, api_headers, api_params=None):
     log("response: " + api_response.text)
     log("status_code: " + str(api_response.status_code))
     if api_response.status_code == 401:
-        get_oauth_token()
+        token = get_oauth_token()
+        api_headers["Authorization"] = "Bearer " + token
         np_api_request(url, data, api_headers, api_params)
     else:
         return api_response
@@ -409,7 +410,7 @@ def get_oauth_token():
     log(api_response.text)
     if api_response.status_code == 200:
         credentials = json.loads(api_response.text)
-        np_ouath_token = credentials["accessToken"]
+        return credentials["accessToken"]
 
 
 def get_user_document_type(user):
@@ -707,7 +708,7 @@ def get_mongodb():
 
 
 if __name__ == '__main__':
-    get_oauth_token()
-    log(np_ouath_token)
+    np_oauth_token = get_oauth_token()
+    log(np_oauth_token)
     app.run(debug=True)
 
