@@ -399,7 +399,7 @@ def get_oauth_token():
 
     data = {"grant_type": os.environ["NP_GTYPE"],
             "client_id": os.environ["NP_CID"],
-            "client_secret": os.environ["NP_CRT"]}
+            "client_secret": os.environ["NP_SRT"]}
 
     url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
     api_response = requests.post(url, headers=api_headers, data=data)
