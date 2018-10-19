@@ -237,7 +237,6 @@ def get_user_by_name(name, operation, db):
             payload["template_type"] = "list"
             payload["top_element_style"] = "compact"
         attachment["payload"] = payload
-
         return "OK", 200, attachment
 
 
@@ -399,13 +398,41 @@ def get_user_balance(user, db):
                    "accept": "application/json",
                    "Content-Type": "application/json",
                    "Authorization": "Bearer $OAUTH2TOKEN$"}
-
+    image_url = os.environ["IMAGES_URL"]
     api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
     api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
     if api_response.status_code == 200:
+        attachment = {"type": "template"}
+        payload = {"template_type": "generic", "elements": []}
+        balance = json.dumps(api_response.text)
+        elements = {"buttons": [], "title": "Tarjeta: " + balance["card-number"],
+                    "subtitle": "available-balance: " + balance["available-balance"],
+                    "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}
+        payload["elements"].append(elements)
+        attachment["payload"] = payload
+        recipient = {"id": user["id"]}
+        rsp_message = {"attachment": attachment}
+        data = {"recipient": recipient, "message": rsp_message}
+        log(data)
+        requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                      headers=headers, data=json.dumps(data))
         return "OK", 200
     else:
+        attachment = {"type": "template"}
+        payload = {"template_type": "generic", "elements": []}
+        elements = {"buttons": [], "title": "En estos momentos no pude procesar tu operación.",
+                    "subtitle": "available-balance: 0.00",
+                    "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}
+        payload["elements"].append(elements)
+        attachment["payload"] = payload
+        recipient = {"id": user["id"]}
+        rsp_message = {"attachment": attachment}
+        data = {"recipient": recipient, "message": rsp_message}
+        log(data)
+        requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                      headers=headers, data=json.dumps(data))
         send_message(user["id"], "En estos momentos no pude procesar tu operación.")
+        return "OK", 200
 
 
 def np_api_request(url, data, api_headers, api_params=None, http_method=None):
