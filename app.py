@@ -403,7 +403,8 @@ def get_oauth_token():
             "client_secret": os.environ["NP_SRT"]}
 
     url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
-    api_response = requests.post(url, headers=api_headers, data=data)
+    api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
+    log(api_response.text)
     if api_response.status_code == 200:
         crentials = json.loads(api_response.text)
         np_ouath_token = crentials["access_token"]
