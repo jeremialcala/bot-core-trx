@@ -107,7 +107,7 @@ def get_message():
 
                     if "operationStatus" in user:
                         if user["operationStatus"] == 1:
-                            rsp = get_user_by_name(nema=message, operation="SEND_MONEY", db=db)
+                            rsp = get_user_by_name(name=message, operation="SEND_MONEY", db=db)
                             if rsp[1] == 200:
                                 send_message(user["id"], "Selecciona la persona a la que quieres enviar el dinero")
                                 attachment = rsp[2]
