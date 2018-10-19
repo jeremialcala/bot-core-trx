@@ -421,7 +421,7 @@ def np_api_request(url, data, api_headers, api_params=None, http_method=None):
     if api_response.status_code == 401:
         np_oauth_token = get_oauth_token()
         api_headers["Authorization"] = "Bearer " + np_oauth_token
-        return np_api_request(url, data, api_headers, api_params)
+        return np_api_request(url, data, api_headers, api_params, http_method)
     else:
         return api_response
 
