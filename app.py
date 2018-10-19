@@ -225,10 +225,10 @@ def get_user_by_name(name, operation, db):
             buttons["type"] = "postback"
             buttons["payload"] = operation + "|" + friend["id"]
             elements["buttons"].append(buttons)
+            payload["elements"].append(elements)
         if result.count() > 1:
             payload["template_type"] = "list"
             payload["top_element_style"] = "compact"
-        payload["elements"].append(elements)
         attachment["payload"] = payload
 
         return "OK", 200, attachment
