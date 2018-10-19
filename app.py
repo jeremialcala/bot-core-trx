@@ -19,6 +19,7 @@ params = {
 headers = {
     "Content-Type": "application/json"
 }
+np_ouath_token = "cfa08a760590b543c7cae2796c822ac4"
 objects = []
 
 
@@ -305,7 +306,7 @@ def save_user_information(user, message, db):
 
             if confirmationTime.seconds > 180:
                 send_message(user["id"], "El código ya expiro. ")
-                send_message(user["id"], "para continuar necesito enviarte un codigo de activación.")
+                send_message(user["id"], "para continuar con el registro necesito enviarte un codigo de activación.")
                 options = [{"content_type": "text", "title": "SMS", "payload": "POSTBACK_PAYLOAD"},
                            {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
                 send_options(user["id"], options, "por donde prefieres recibirlo?")
@@ -317,6 +318,12 @@ def save_user_information(user, message, db):
                 db.users.update({"id": user['id']},
                                 {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
                 send_message(user["id"], "Muy bien! vamos a registrarte una cuenta.")
+                origination = user_origination(user, db)
+                if origination[1] == 200:
+                    send_message(user["id"], "Exito! ya tienes una cuenta!")
+                    send_operations(user["id"])
+                else:
+                    send_message(user["id"], "No pude registrar tu cuenta, por favor intenta mas tarde.")
                 return response
 
             else:
@@ -325,6 +332,88 @@ def save_user_information(user, message, db):
 
     return response
 
+
+def user_origination(user, db):
+    data = {"card-number": "000712", "exp-date": "0320", "document-type": "CC", "document-number": "16084701",
+            "name-1": " ", "name-2": " ", "last-name-1": "gómez", " ": " ",
+            "birth-date": "01/06/1982", "birth-place": " ", "nationality": "THE WORLD", "sex": "M",
+            "marital-status": "S", "phone-1": " ", "phone-2": "00000000000", "phone-3": "00000000000",
+            "email": "yecidaltahona1990@hotmail.com", "address-1": "Carrera 11 # 10 - 12",
+            "code-address-1": "11001",
+            "address-2": "Carrera 11 # 10 - 12", "code-address-2": "11001", "ocupation": "SOME",
+            "work-status": "1", "work-center": "SOME PLACE", "work-center-id": "00000000",
+            "work-center-position": "SOMEINFO", "monthly-income": "1.000,00", "govt-emp": "0",
+            "govt-center": "", "branch-id": "1", "request-user": "JMENESES"}
+
+    account = get_account_from_pool(db)
+
+    data["card-number"] = account["cardNumber"]
+    data["exp-date"] = account["fechaExp"]
+    data["document-type"] = get_user_document_type(user)
+    data["document-number"] = user["document"]["documentNumber"]
+    data["name-1"] = user["first_name"]
+    data["last-name-1"] = user["last_name"]
+    data["phone-1"] = user["cellphone"]
+    data["address-2"] = user["location"]["Address"]["Label"]
+
+    api_headers = {"x-country": "Usd",
+                   "language": "es",
+                   "channel": "API",
+                   "accept": "application/json",
+                   "Content-Type": "application/json",
+                   "Authorization": "Bearer $OAUTH2TOKEN$"}
+
+    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_ouath_token)
+
+    api_params = {"trxid=" + random_with_n_digits(10)}
+    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] + account["indx"] + "/employee"
+    api_response = np_api_request(url=url, data=data, api_headers=api_headers, api_params=api_params)
+    if api_response.status_code == 200:
+        db.accountPool.update({"_id": account["_id"]},
+                              {"codMisc": "AF"})
+        db.users.update({"id": user["id"]},
+                        {"accountId": account["_id"]})
+        return "OK", 200, account
+    else:
+        return api_response.text, api_response.status_code
+
+
+def np_api_request(url, data, api_headers, api_params=None):
+    api_response = requests.post(url, params=api_params, headers=api_headers, data=data)
+    if api_response.status_code == 401:
+        get_oauth_token()
+        np_api_request(url, data, api_headers, api_params)
+    else:
+        return api_response
+
+
+def get_oauth_token():
+    api_headers = {"x-channel": "web",
+                   "x-language": "es",
+                   "accept": "application/json",
+                   "Content-Type": "application/json"}
+
+    data = {"grant_type": os.environ["NP_GTYPE"],
+            "client_id": os.environ["NP_CID"],
+            "client_secret": os.environ["NP_CRT"]}
+
+    url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
+    api_response = requests.post(url, headers=api_headers, data=data)
+    if api_response.status_code == 200:
+        crentials = json.loads(api_response.text)
+        np_ouath_token = crentials["access_token"]
+
+
+def get_user_document_type(user):
+    if user["document"]["documentType"] == "cedula":
+        return "CC"
+    else:
+        return "PA"
+
+
+def get_account_from_pool(db):
+    criteria ={"codMisc": "SA"}
+    return db.accountPool.find_one(criteria)
 
 def random_with_n_digits(n):
     range_start = 10 ** (n - 1)
@@ -609,5 +698,6 @@ def get_mongodb():
 
 
 if __name__ == '__main__':
+    get_oauth_token()
     app.run(debug=True)
 
