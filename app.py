@@ -85,6 +85,20 @@ def get_message():
                     message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
                     log(message)
 
+                    if "operationStatus" in user:
+                        if user["operationStatus"] == 1:
+                            rsp = get_user_by_name(name=message, operation="SEND_MONEY", db=db)
+                            log(rsp)
+                            if rsp[1] == 200:
+                                send_message(user["id"], "Selecciona la persona a la que quieres enviar el dinero")
+                                attachment = rsp[2]
+                                recipient = {"id": user["id"]}
+                                rsp_message = {"attachment": attachment}
+                                data = {"recipient": recipient, "message": rsp_message}
+                                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                                              headers=headers, data=json.dumps(data))
+                                return "OK", 200
+
                     if "registedStatus" in user:
                         response = save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
                         if response["rc"] == 0:
@@ -104,20 +118,6 @@ def get_message():
 
                     if "greet" in categories:
                         send_operations(user["id"])
-
-                    if "operationStatus" in user:
-                        if user["operationStatus"] == 1:
-                            rsp = get_user_by_name(name=message, operation="SEND_MONEY", db=db)
-                            log(rsp)
-                            if rsp[1] == 200:
-                                send_message(user["id"], "Selecciona la persona a la que quieres enviar el dinero")
-                                attachment = rsp[2]
-                                recipient = {"id": user["id"]}
-                                rsp_message = {"attachment": attachment}
-                                data = {"recipient": recipient, "message": rsp_message}
-                                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                                              headers=headers, data=json.dumps(data))
-                                return "OK", 200
 
             if "postback" in messaging:
                 if "tyc" not in user:
