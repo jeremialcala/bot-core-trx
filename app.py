@@ -86,6 +86,7 @@ def get_message():
                     log(message)
 
                     if "operationStatus" in user:
+                        log("operationStatus")
                         if user["operationStatus"] == 1:
                             rsp = get_user_by_name(name=message, operation="SEND_MONEY", db=db)
                             log(rsp)
@@ -185,7 +186,7 @@ def get_message():
 
         return "OK", 200
     except Exception as e:
-        log(e.args)
+        log("Error " + str(e.args))
         return "OK", 200
 
 
@@ -201,14 +202,15 @@ def get_image():
 
 def get_user_by_name(name, operation, db):
     names = str(name).strip()
+    log(names)
     if len(names) > 1:
         criteria = {"first_name": "/.*" + names[0] + "*/", "last_name": "/.*" + names[1] + "*/"}
     else:
         criteria = {"first_name": "/.*" + names[0] + "*/"}
     image_url = os.environ["APP_ID"]
     result = db.user.find(criteria)
-    elements = objects[0]
-    buttons = objects[1]
+    elements = {"buttons": []}
+    buttons = {}
     attachment = {"type": "template"}
     payload = {"template_type": "gereric", "elements": []}
 
