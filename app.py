@@ -19,6 +19,7 @@ params = {
 headers = {
     "Content-Type": "application/json"
 }
+objects = []
 
 
 @app.route('/', methods=['GET'])
@@ -44,6 +45,7 @@ def get_message():
                 return "OK", 200
 
             db = get_mongodb()
+            objects = db.objects.find()
             result = db.users.find({'id': user_id})
             msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
 
@@ -102,6 +104,19 @@ def get_message():
 
                     if "greet" in categories:
                         send_operations(user["id"])
+
+                    if "operationStatus" in user:
+                        if user["operationStatus"] == 2:
+                            rsp = get_user_by_name(nema=message, operation="SEND_MONEY", db=db)
+                            if rsp[1] == 200:
+                                send_message(user["id"], "Selecciona la persona a la que quieres enviar el dinero")
+                                attachment = rsp[2]
+                                recipient = {"id": user["id"]}
+                                rsp_message = {"attachment": attachment}
+                                data = {"recipient": recipient, "message": rsp_message}
+                                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                                              headers=headers, data=json.dumps(data))
+                                return "OK", 200
 
             if "postback" in messaging:
                 if "tyc" not in user:
@@ -163,6 +178,8 @@ def get_message():
 
                 if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
                     send_message(user["id"], "Muy bien! indicame el nombre del que recibira el dinero")
+                    db.users.update({"id": user['id']},
+                                    {'$set': {"operationStatus": 1}})
                     return "OK", 200
 
         return "OK", 200
@@ -179,6 +196,35 @@ def get_image():
     except Exception as e:
         print("Error: " + str(e.args))
         return "NOT FOUND", 404
+
+
+def get_user_by_name(name, operation, db):
+    names = str(name).strip()
+    if len(names) > 1:
+        criteria = {"first_name": "/.*" + names[0] + "*/", "last_name": "/.*" + names[1] + "*/"}
+    else:
+        criteria = {"first_name": "/.*" + names[0] + "*/"}
+    image_url = os.environ["APP_ID"]
+    result = db.user.find(criteria)
+    elements = objects[0]
+    buttons = objects[1]
+    attachment = {"type": "template"}
+    payload = {"template_type": "gereric", "elements": []}
+
+    if result.count() is 0:
+        return "No se encontraron usuarios", 404
+    else:
+        for friend in result:
+            elements["title"] = friend["first_name"] + " " + friend["last_name"]
+            elements["subtitle"] = friend["cellphone"]
+            elements["image_url"] = image_url + "?file=" + friend["id"] + ".jpg"
+            buttons["title"] = "Enviar Dinero"
+            buttons["type"] = "payload"
+            buttons["payload"] = operation + "|" + friend["id"]
+            elements["buttons"].append(buttons)
+        payload["elements"].append(elements)
+        attachment["payload"] = payload
+        return "OK", 200, attachment
 
 
 def save_user_information(user, message, db):
