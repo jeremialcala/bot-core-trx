@@ -392,7 +392,7 @@ def get_user_balance(user, db):
     account = db.accountPool.find_one({"_id": user["accountId"]})
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
           + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
-          + "?trxid=" + str(random_with_n_digits(10))
+          + "/balance-inq?trxid=" + str(random_with_n_digits(10))
     api_headers = {"x-country": "Usd",
                    "language": "es",
                    "channel": "API",
