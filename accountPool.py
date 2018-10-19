@@ -29,11 +29,25 @@ if __name__ == '__main__':
         db = get_mongodb()
         name = "Je"
         names = name.split()
-        criteria = {"first_name": {"$regex": names[0]}}
-        result = db.users.find(criteria)
-        print(result.count())
-        for object in result:
-            print(object)
+        criteria = {"codMisc": "SA"}
+        data = {"card-number": "000712", "exp-date": "0320", "document-type": "CC", "document-number": "16084701",
+                "name-1": "Yecid", "name-2": "Jesús", "last-name-1": "gómez", "last-name-2": "Altahoña",
+                "birth-date": "01/06/1982", "birth-place": "BOGOTA", "nationality": "THE WORLD", "sex": "M",
+                "marital-status": "C", "phone-1": "3017828825", "phone-2": "00000000000", "phone-3": "00000000000",
+                "email": "yecidaltahona1990@hotmail.com", "address-1": "Carrera 11 # 10 - 12",
+                "code-address-1": "11001",
+                "address-2": "Carrera 11 # 10 - 12", "code-address-2": "11001", "ocupation": "SOME",
+                "work-status": "1", "work-center": "SOME PLACE", "work-center-id": "00000000",
+                "work-center-position": "SOMEINFO", "monthly-income": "1.000,00", "govt-emp": "0",
+                "govt-center": "", "branch-id": "1", "request-user": "JMENESES"}
+        print(json.dumps(data))
+
+        # result = db.accountPool.find_one(criteria)
+        # criteria = {"first_name": {"$regex": names[0]}}
+        # result = db.users.find(criteria)
+        # print(result)
+        # for object in result:
+        #    print(object)
         # app.run(debug=True)
         # urllib.request.urlretrieve(URL, "profile/pic.jpg")
         # for line in open('accountPool.txt'):

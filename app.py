@@ -315,12 +315,12 @@ def save_user_information(user, message, db):
                 return response
             log(user["confirmation"])
             if str(user["confirmation"]) == confirmation["numbers"]:
-                db.users.update({"id": user['id']},
-                                {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
                 send_message(user["id"], "Muy bien! vamos a registrarte una cuenta.")
                 origination = user_origination(user, db)
                 if origination[1] == 200:
                     send_message(user["id"], "Exito! ya tienes una cuenta!")
+                    db.users.update({"id": user['id']},
+                                    {'$set': {"registedStatus": 6, "date-registedStatus": datetime.now()}})
                     send_operations(user["id"])
                 else:
                     send_message(user["id"], "No pude registrar tu cuenta, por favor intenta mas tarde.")
