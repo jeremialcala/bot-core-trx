@@ -212,7 +212,7 @@ def get_user_by_name(name, operation, db):
     elements = {"buttons": []}
     buttons = {}
     attachment = {"type": "template"}
-    payload = {"template_type": "gereric", "elements": []}
+    payload = {"template_type": "generic", "elements": []}
     log(result.count())
     if result.count() is 0:
         return "No se encontraron usuarios", 404
@@ -222,7 +222,7 @@ def get_user_by_name(name, operation, db):
             elements["subtitle"] = friend["cellphone"]
             elements["image_url"] = image_url + "?file=" + friend["id"] + ".jpg"
             buttons["title"] = "Enviar Dinero"
-            buttons["type"] = "payload"
+            buttons["type"] = "postback"
             buttons["payload"] = operation + "|" + friend["id"]
             elements["buttons"].append(buttons)
         payload["elements"].append(elements)
