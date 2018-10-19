@@ -203,9 +203,9 @@ def get_image():
 def get_user_by_name(name, operation, db):
     names = str(name).strip()
     if len(names) > 1:
-        criteria = {"first_name": "/.*" + names[0] + "*/", "last_name": "/.*" + names[1] + "*/"}
+        criteria = {"first_name": {"$regex": name[0]}, "last_name": {"$regex": name[1]}}
     else:
-        criteria = {"first_name": "/.*" + names[0] + "*/"}
+        criteria = {"first_name": {"$regex": name[0]}}
     image_url = os.environ["APP_ID"]
     result = db.users.find(criteria)
     elements = {"buttons": []}
