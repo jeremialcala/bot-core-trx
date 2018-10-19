@@ -411,7 +411,7 @@ def get_user_balance(user, db):
 def np_api_request(url, data, api_headers, api_params=None, http_method=None):
     log("Conectando a: " + url)
     if http_method is "GET":
-        api_response = requests("GET", url, headers=api_headers)
+        api_response = requests.request("GET", url, headers=api_headers)
     else:
         log("Data:" + json.dumps(data))
         api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
