@@ -384,7 +384,7 @@ def np_api_request(url, data, api_headers, api_params=None):
     log("Data:" + json.dumps(data))
     api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
     log("response: " + api_response.text)
-    log("status_code: " + api_response.status_code)
+    log("status_code: " + str(api_response.status_code))
     if api_response.status_code == 401:
         get_oauth_token()
         # np_api_request(url, data, api_headers, api_params)

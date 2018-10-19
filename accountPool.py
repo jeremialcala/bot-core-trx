@@ -3,7 +3,7 @@ import pymongo
 import json
 import urllib.request
 from flask import Flask, request, send_file
-
+import requests
 
 app = Flask(__name__)
 
@@ -40,7 +40,17 @@ if __name__ == '__main__':
                 "work-status": "1", "work-center": "SOME PLACE", "work-center-id": "00000000",
                 "work-center-position": "SOMEINFO", "monthly-income": "1.000,00", "govt-emp": "0",
                 "govt-center": "", "branch-id": "1", "request-user": "JMENESES"}
-        print(json.dumps(data))
+        # print(json.dumps(data))
+        api_headers = {"x-country": "Usd",
+                       "language": "es",
+                       "channel": "API",
+                       "accept": "application/json",
+                       "Content-Type": "application/json",
+                       "Authorization": "Bearer $OAUTH2TOKEN$"}
+        api_params = {"trxid=" + "1234567890"}
+        url = "http://72.46.255.110:8008/ceoapi/1.0/11/employee?trxid=1234567890"
+        api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
+        print("response: " + api_response.text)
 
         # result = db.accountPool.find_one(criteria)
         # criteria = {"first_name": {"$regex": names[0]}}
@@ -54,4 +64,5 @@ if __name__ == '__main__':
         #    data = json.loads(line.strip())
         #    print(db.accountPool.insert_one(data))
     except Exception as e:
+        print(e.__str__())
         print("Error: " + str(e.args))
