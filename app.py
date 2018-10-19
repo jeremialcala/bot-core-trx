@@ -365,9 +365,10 @@ def user_origination(user, db):
 
     api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_ouath_token)
 
-    api_params = {"trxid=" + str(random_with_n_digits(10))}
-    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] + account["indx"] + "/employee"
-    api_response = np_api_request(url=url, data=data, api_headers=api_headers, api_params=api_params)
+    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
+          + account["indx"] + "/employee?trxid=" + str(random_with_n_digits(10))
+
+    api_response = np_api_request(url=url, data=data, api_headers=api_headers)
     if api_response.status_code == 200:
         db.accountPool.update({"_id": account["_id"]},
                               {"codMisc": "AF"})
