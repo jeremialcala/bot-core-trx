@@ -111,6 +111,7 @@ def get_user_movements(user, db, mov_id=None):
         url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
               + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
               + "/mov-inq?trxid=" + str(random_with_n_digits(10))
+
         api_headers = {"x-country": "Usd",
                        "language": "es",
                        "channel": "API",
@@ -118,6 +119,7 @@ def get_user_movements(user, db, mov_id=None):
                        "Content-Type": "application/json",
                        "Authorization": "Bearer $OAUTH2TOKEN$"}
         api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
+
         api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
         if api_response.status_code == 200:
             response = json.loads(api_response.text)
@@ -131,14 +133,14 @@ def get_user_movements(user, db, mov_id=None):
                 }
                 mov_id = db.movements.insert(movements)
                 movements["_id"] = mov_id
-            attachment = create_mov_attachment(movements)
-            recipient = {"id": user["id"]}
-            rsp_message = {"attachment": attachment}
-            data = {"recipient": recipient, "message": rsp_message}
-            log(data)
-            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                          headers=headers, data=json.dumps(data))
-            return "OK", 200
+                attachment = create_mov_attachment(movements)
+                recipient = {"id": user["id"]}
+                rsp_message = {"attachment": attachment}
+                data = {"recipient": recipient, "message": rsp_message}
+                log(data)
+                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                              headers=headers, data=json.dumps(data))
+                return "OK", 200
         else:
             send_message(user["id"], "En estos momentos no pudimos procesar tu operación.")
             return "OK", 200
