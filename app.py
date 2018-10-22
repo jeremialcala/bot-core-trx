@@ -21,8 +21,28 @@ headers = {
 }
 
 objects = []
-global np_oauth_token
-np_oauth_token = "cfa08a760590b543c7cae2796c822ac4"
+
+
+def get_oauth_token():
+    api_headers = {"x-channel": "web",
+                   "x-language": "es",
+                   "accept": "application/json",
+                   "Content-Type": "application/json"}
+
+    data = {"grant_type": os.environ["NP_GTYPE"],
+            "client_id": os.environ["NP_CID"],
+            "client_secret": os.environ["NP_SRT"]}
+
+    url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
+    api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
+    log(api_response.text)
+
+    if api_response.status_code == 200:
+        credentials = json.loads(api_response.text)
+        return credentials["accessToken"]
+
+
+np_oauth_token = get_oauth_token()
 
 
 @app.route('/', methods=['GET'])
@@ -451,25 +471,6 @@ def np_api_request(url, data, api_headers, api_params=None, http_method=None):
         return np_api_request(url, data, api_headers, api_params, http_method)
     else:
         return api_response
-
-
-def get_oauth_token():
-    api_headers = {"x-channel": "web",
-                   "x-language": "es",
-                   "accept": "application/json",
-                   "Content-Type": "application/json"}
-
-    data = {"grant_type": os.environ["NP_GTYPE"],
-            "client_id": os.environ["NP_CID"],
-            "client_secret": os.environ["NP_SRT"]}
-
-    url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
-    api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
-    log(api_response.text)
-
-    if api_response.status_code == 200:
-        credentials = json.loads(api_response.text)
-        return credentials["accessToken"]
 
 
 def get_user_document_type(user):
