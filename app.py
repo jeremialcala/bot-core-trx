@@ -51,7 +51,7 @@ def get_message():
             objects = db.objects.find()
             result = db.users.find({'id': user_id})
             msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
-            user["registedStatus"] = 0
+            user["registedStatus"] = 1
 
             if result.count() is 0:
                 db.users.insert_one(user)
@@ -372,7 +372,6 @@ def generator(categories, db, user):
                                 {'$set': {"registedStatus": 4,
                                           "date-registedStatus": datetime.now()}})
                 message = "indicame tu numero de celular"
-
 
     return {"user": user, "msg": message}
 
