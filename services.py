@@ -159,7 +159,7 @@ def get_user_movements(user, db, mov_id=None):
         return "OK", 200
 
 
-def create_mov_attachment(user, mov_list, db=get_mongodb):
+def create_mov_attachment(user, mov_list, db=get_mongodb()):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = 0
