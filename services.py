@@ -129,6 +129,13 @@ def get_user_movements(user, db, mov_id=None):
                 mov_id = db.movements.insert(movements)
                 movements["_id"] = mov_id
             attachment = create_mov_attachment(movements)
+            recipient = {"id": user["id"]}
+            rsp_message = {"attachment": attachment}
+            data = {"recipient": recipient, "message": rsp_message}
+            log(data)
+            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                          headers=headers, data=json.dumps(data))
+            return "OK", 200
         else:
             send_message(user["id"], "En estos momentos no pudimos procesar tu operación.")
             return "OK", 200
@@ -147,13 +154,13 @@ def get_user_movements(user, db, mov_id=None):
             return "OK", 200
         attachment = create_mov_attachment(movements, mov_id)
 
-    recipient = {"id": user["id"]}
-    rsp_message = {"attachment": attachment}
-    data = {"recipient": recipient, "message": rsp_message}
-    log(data)
-    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                  headers=headers, data=json.dumps(data))
-    return "OK", 200
+        recipient = {"id": user["id"]}
+        rsp_message = {"attachment": attachment}
+        data = {"recipient": recipient, "message": rsp_message}
+        log(data)
+        requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                      headers=headers, data=json.dumps(data))
+        return "OK", 200
 
 
 def create_mov_attachment(mov_list):
@@ -161,14 +168,15 @@ def create_mov_attachment(mov_list):
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = 0
     for mov in mov_list["movements"]:
-        if mov_count > (4 * mov_list["page"]):
+        if mov_count < (4 * mov_list["page"]):
             payload["elements"].append(
                 {
                     "title": mov["mov-desc"],
                     "subtitle": "💰" + mov["mov-amount"] + "\n🗓️" + mov["mov-date"]
                 })
-            payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENTS_"
-                                                                                        + str(mov_list["_id"])}]
-            attachment["payload"] = payload
+            mov_count += 1
+    payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT" +
+                                                                                str(mov_list["_id"])}]
+    attachment["payload"] = payload
     return attachment
 
