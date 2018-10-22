@@ -51,7 +51,6 @@ def get_message():
             objects = db.objects.find()
             result = db.users.find({'id': user_id})
             msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
-            user["registedStatus"] = 0
 
             if result.count() is 0:
                 db.users.insert_one(user)
