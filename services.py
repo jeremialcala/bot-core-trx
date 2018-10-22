@@ -103,7 +103,7 @@ def get_user_balance(user, db):
 
 def get_user_movements(user, db, mov_id=None):
     account = db.accountPool.find_one({"_id": user["accountId"]})
-
+    log(mov_id)
     if mov_id is None:
         url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
               + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
@@ -152,6 +152,7 @@ def get_user_movements(user, db, mov_id=None):
         if movements["status"] == 0 or pages == movements["page"]:
             send_message(user["id"], "No hay mas movimientos...")
             return "OK", 200
+
         attachment = create_mov_attachment(movements)
 
         recipient = {"id": user["id"]}
