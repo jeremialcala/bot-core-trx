@@ -161,10 +161,13 @@ def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
 def create_mov_attachment(user, mov_list, db=get_mongodb()):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
-    mov_count = mov_list["page"]
+    if mov_list["page"] == 1:
+        mov_count = 0
+    else:
+        mov_count = 4 * mov_list["page"]
     for mov in mov_list["movements"]:
-        log(mov)
         if mov_count < (4 * mov_list["page"]):
+            log(mov)
             payload["elements"].append(
                 {
                     "title": mov["mov-desc"],
