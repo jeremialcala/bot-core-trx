@@ -1,8 +1,8 @@
 import os
 import json
 import requests
-from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request
-from app import np_oauth_token, headers, params, send_message
+from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request, send_message
+from app import np_oauth_token, headers, params
 
 
 def user_origination(user, db):

@@ -8,7 +8,7 @@ import requests
 from flask import Flask, request, send_file
 from twilio.rest import Client
 
-from utils import get_oauth_token, get_user_by_name, log, get_mongodb, random_with_n_digits
+from utils import get_oauth_token, get_user_by_name, log, get_mongodb, random_with_n_digits, send_message
 
 app = Flask(__name__)
 
@@ -391,26 +391,6 @@ def get_user_by_id(user_id):
         return r.text
     else:
         return r.text
-
-
-def send_message(recipient_id, message_text):
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
-    params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = json.dumps({
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "text": message_text
-        }
-    })
-    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-
 
 def send_termandc(recipient_id):
     params = {
