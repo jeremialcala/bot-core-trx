@@ -133,13 +133,7 @@ def get_user_movements(user, db, mov_id=None):
                 }
             mov_id = db.movements.insert(movements)
             movements["_id"] = mov_id
-            attachment = create_mov_attachment(movements)
-            recipient = {"id": user["id"]}
-            rsp_message = {"attachment": attachment}
-            data = {"recipient": recipient, "message": rsp_message}
-            log(data)
-            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                          headers=headers, data=json.dumps(data))
+            create_mov_attachment(user, movements)
             return "OK", 200
         else:
             send_message(user["id"], "En estos momentos no pudimos procesar tu operación.")
@@ -160,18 +154,12 @@ def get_user_movements(user, db, mov_id=None):
             send_message(user["id"], "No hay mas movimientos...")
             return "OK", 200
 
-        attachment = create_mov_attachment(movements)
+        create_mov_attachment(user, movements)
 
-        recipient = {"id": user["id"]}
-        rsp_message = {"attachment": attachment}
-        data = {"recipient": recipient, "message": rsp_message}
-        log(data)
-        requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                      headers=headers, data=json.dumps(data))
         return "OK", 200
 
 
-def create_mov_attachment(mov_list, db=get_mongodb):
+def create_mov_attachment(user, mov_list, db=get_mongodb):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = 0
@@ -189,5 +177,11 @@ def create_mov_attachment(mov_list, db=get_mongodb):
     payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                 str(mov_list["_id"])}]
     attachment["payload"] = payload
+    recipient = {"id": user["id"]}
+    rsp_message = {"attachment": attachment}
+    data = {"recipient": recipient, "message": rsp_message}
+    log(data)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                  headers=headers, data=json.dumps(data))
     return attachment
 
