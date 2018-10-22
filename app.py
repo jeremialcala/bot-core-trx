@@ -147,6 +147,12 @@ def get_message():
                         get_user_movements(user, db)
                         return "OK", 200
 
+                if "MOVEMENTS_" in messaging["postback"]["payload"]:
+                    if user["registedStatus"] == 6:
+                        payload = messaging["postback"]["payload"].split("_")
+                        get_user_movements(user, db, payload[1])
+                        return "OK", 200
+
                 if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
                     send_message(user["id"], "Claro que si vamos a empezar")
                     send_operations(user["id"])
