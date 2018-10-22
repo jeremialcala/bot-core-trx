@@ -35,8 +35,7 @@ def get_oauth_token():
 
     url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
     api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
-    log(api_response.text)
-
+    # log(api_response.text)
     if api_response.status_code == 200:
         credentials = json.loads(api_response.text)
         return credentials["accessToken"]
