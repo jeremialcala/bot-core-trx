@@ -141,7 +141,7 @@ def get_user_movements(user, db, mov_id=None):
             return "OK", 200
 
     else:
-        criteria = {"userId": user["id"], "status": 1}
+        criteria = {"_id": mov_id, "userId": user["id"], "status": 1}
         movements = db.movements.find_one(criteria)
         pages = movements["count"] / 4
 
@@ -152,7 +152,7 @@ def get_user_movements(user, db, mov_id=None):
         if movements["status"] == 0 or pages == movements["page"]:
             send_message(user["id"], "No hay mas movimientos...")
             return "OK", 200
-        attachment = create_mov_attachment(movements, mov_id)
+        attachment = create_mov_attachment(movements)
 
         recipient = {"id": user["id"]}
         rsp_message = {"attachment": attachment}
