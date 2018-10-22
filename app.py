@@ -113,14 +113,6 @@ def get_message():
 
                     categories = classification(message, False, db)
 
-                    if user["registedStatus"] == 6:
-                        if "balance" in categories:
-                            get_user_balance(user, db)
-                            return "OK", 200
-                        if "movements" in categories:
-                            get_user_movements(user, db)
-                            return "OK", 200
-
                     log(categories)
                     response = generator(categories, db, user)
 
