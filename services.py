@@ -147,10 +147,9 @@ def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
             send_message(user["id"], "No se encontraron movimientos...")
             return "OK", 200
 
-        pages = movements["count"] / 4
-        if movements["status"] == 0 or pages == movements["page"]:
+        if movements["status"] == 0 or movements["page"] >= 4:
             db.movements.update({"_id": ObjectId(mov_id)},
-                                {"status": 0})
+                                {'$set': {"status": 0}})
             send_message(user["id"], "No hay mas movimientos...")
             return "OK", 200
 
@@ -162,7 +161,7 @@ def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
 def create_mov_attachment(user, mov_list, db=get_mongodb()):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
-    mov_count = 0
+    mov_count = mov_list["page"]
     for mov in mov_list["movements"]:
         log(mov)
         if mov_count < (4 * mov_list["page"]):
@@ -182,5 +181,5 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                   headers=headers, data=json.dumps(data))
     db.movements.update({"_id": ObjectId(mov_list["_id"])},
-                        {'$set':{"page": mov_list["page"] + 1}})
+                        {'$set': {"page": mov_list["page"] + 1}})
 
