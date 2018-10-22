@@ -4,6 +4,8 @@ import json
 import urllib.request
 from flask import Flask, request, send_file
 import requests
+import cv2
+
 
 app = Flask(__name__)
 
@@ -52,15 +54,15 @@ if __name__ == '__main__':
         # api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
         # print("response: " + api_response.text)
         criteria = {"id": "1752570331535883"}
-        user = db.users.find_one(criteria)
-        print(user)
-        account = db.accountPool.find_one({"_id": user["accountId"]})
+        # user = db.users.find_one(criteria)
+        # print(user)
+        # account = db.accountPool.find_one({"_id": user["accountId"]})
         # result = db.accountPool.find_one(criteria)
         # db.accountPool.update({"_id": result["_id"]},
         #                    {"codMisc": "AF"})
         # criteria = {"first_name": {"$regex": names[0]}}
         # result = db.users.find(criteria)
-        print(account)
+        # print(account)
         # for object in result:
         #    print(object[0])
         # app.run(debug=True)
