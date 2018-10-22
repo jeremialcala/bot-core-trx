@@ -62,6 +62,11 @@ def get_message():
                 for document in result:
                     user = document
 
+            if "tyc" not in user:
+                send_termandc(user["id"])
+                accept_tyc(user["id"])
+                return "OK", 200
+
             if "message" in messaging:
                 if "attachments" in data['entry'][0]['messaging'][0]["message"]:
                     attachment = data['entry'][0]['messaging'][0]["message"]["attachments"]
@@ -127,11 +132,6 @@ def get_message():
                     log(response)
                     user = response["user"]
                     send_message(user["id"], response["msg"])
-
-                    if "tyc" not in user:
-                        send_termandc(user["id"])
-                        accept_tyc(user["id"])
-                        return "OK", 200
 
                     if "greet" in categories:
                         send_operations(user["id"])
