@@ -162,15 +162,14 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = mov_list["page"]
-    for mov in mov_list["movements"]:
-        if mov_count < (4 + mov_list["page"]):
-            log(mov)
-            payload["elements"].append(
-                {
-                    "title": mov["mov-desc"],
-                    "subtitle": "💰" + mov["mov-amount"] + "\n🗓️" + mov["mov-date"]
-                })
-            mov_count += 1
+    for x in range(mov_count, (4 + mov_list["page"])):
+        log(mov_list["movements"][x])
+        payload["elements"].append(
+            {
+                "title": mov_list["movements"][x]["mov-desc"],
+                "subtitle": "💰" + mov_list["movements"][x]["mov-amount"] + "\n🗓️" + mov_list["movements"][x]["mov-date"]
+            })
+
     payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                 str(mov_list["_id"])}]
     attachment["payload"] = payload
