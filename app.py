@@ -1,15 +1,14 @@
 # -*- coding: utf8 -*-
 import json
 import os
-import sys
-import re
+import urllib.request
 from datetime import datetime
-from twilio.rest import Client
-import pymongo
+
 import requests
 from flask import Flask, request, send_file
-from random import randint
-import urllib.request
+from twilio.rest import Client
+
+from utils import get_oauth_token, get_user_by_name, log, get_mongodb, random_with_n_digits
 
 app = Flask(__name__)
 
@@ -21,27 +20,9 @@ headers = {
 }
 
 objects = []
-
-
-def get_oauth_token():
-    api_headers = {"x-channel": "web",
-                   "x-language": "es",
-                   "accept": "application/json",
-                   "Content-Type": "application/json"}
-
-    data = {"grant_type": os.environ["NP_GTYPE"],
-            "client_id": os.environ["NP_CID"],
-            "client_secret": os.environ["NP_SRT"]}
-
-    url = os.environ["NP_URL"] + os.environ["NP_OAUTH2"] + "token"
-    api_response = requests.post(url, headers=api_headers, data=json.dumps(data))
-    # log(api_response.text)
-    if api_response.status_code == 200:
-        credentials = json.loads(api_response.text)
-        return credentials["accessToken"]
-
-
 np_oauth_token = get_oauth_token()
+
+from services import user_origination, get_user_balance
 
 
 @app.route('/', methods=['GET'])
@@ -88,7 +69,8 @@ def get_message():
                         location = json.loads(json.dumps(attachment[0]["payload"]["coordinates"]))
                         app_id = os.environ["APP_ID"]
                         app_code = os.environ["APP_CODE"]
-                        here_url = os.environ["REVERSEGEOCODE"] + "prox=" + str(location["lat"]) + "," + str(location["long"])
+                        here_url = os.environ["REVERSEGEOCODE"] + "prox=" + str(location["lat"]) + "," + str(
+                            location["long"])
                         here_url += "&mode=retrieveAddresses&maxresults=1&gen=9&app_id=" + app_id + "&app_code=" + app_code
                         r = requests.get(here_url)
                         here = json.loads(r.text)
@@ -186,17 +168,18 @@ def get_message():
 
                 if user["registedStatus"] == 2:
                     data = json.dumps({
-                                        "recipient": {
-                                            "id": user["id"]
-                                        },
-                                        "message": {
-                                            "text": "me gustaria conocer donde te encuentras",
-                                            "quick_replies": [{
-                                                "content_type": "location"
-                                            }]
-                                        }
-                                      })
-                    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+                        "recipient": {
+                            "id": user["id"]
+                        },
+                        "message": {
+                            "text": "me gustaria conocer donde te encuentras",
+                            "quick_replies": [{
+                                "content_type": "location"
+                            }]
+                        }
+                    })
+                    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers,
+                                  data=data)
                     return "OK", 200
 
                 if user["registedStatus"] == 3:
@@ -228,41 +211,10 @@ def get_image():
         return "NOT FOUND", 404
 
 
-def get_user_by_name(name, operation, db):
-    if len(name) > 1:
-        criteria = {"first_name": {"$regex": name[0]}, "last_name": {"$regex": name[1]}}
-    else:
-        criteria = {"first_name": {"$regex": name[0]}}
-    log(criteria)
-    image_url = os.environ["IMAGES_URL"]
-    result = db.users.find(criteria)
-    buttons = {}
-    attachment = {"type": "template"}
-    payload = {"template_type": "generic", "elements": []}
-    log(result.count())
-    if result.count() is 0:
-        return "No se encontraron usuarios", 404
-    else:
-        for friend in result:
-            elements = {"buttons": [], "title": friend["first_name"] + " " + friend["last_name"],
-                        "subtitle": friend["location"]["Address"]["Label"],
-                        "image_url": image_url + "?file=profile/" + friend["id"] + ".jpg"}
-            buttons["title"] = "Enviar Dinero"
-            buttons["type"] = "postback"
-            buttons["payload"] = operation + "|" + friend["id"]
-            elements["buttons"].append(buttons)
-            payload["elements"].append(elements)
-        if result.count() > 1:
-            payload["template_type"] = "list"
-            payload["top_element_style"] = "compact"
-        attachment["payload"] = payload
-        return "OK", 200, attachment
-
-
 def save_user_information(user, message, db):
     response = {"rc": 100, "msg": "Not related data found"}
     if user["registedStatus"] == 1:
-        documentNumber = only_numerics(message)
+        documentNumber = only_numeric(message)
         if user["document"]["documentType"] == "cedula" and documentNumber["rc"] == 0:
             db.users.update({"id": user['id']},
                             {'$set': {"registedStatus": 2,
@@ -283,21 +235,21 @@ def save_user_information(user, message, db):
 
         if response["rc"] == 0:
             data = json.dumps({
-                                "recipient": {
-                                    "id": user["id"]
-                                },
-                                "message": {
-                                    "text": "me gustaria conocer donde te encuentras",
-                                    "quick_replies": [{
-                                        "content_type": "location"
-                                    }]
-                                }
-                              })
+                "recipient": {
+                    "id": user["id"]
+                },
+                "message": {
+                    "text": "me gustaria conocer donde te encuentras",
+                    "quick_replies": [{
+                        "content_type": "location"
+                    }]
+                }
+            })
             requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
         return response
 
     if user["registedStatus"] == 4:
-        cellphone = only_numerics(message)
+        cellphone = only_numeric(message)
         if cellphone["rc"] == 0:
             result = db.country.find({"name": user["location"]["Address"]["Country"]})
             if result.count() is not 0:
@@ -323,7 +275,7 @@ def save_user_information(user, message, db):
         return response
 
     if user["registedStatus"] == 5:
-        confirmation = only_numerics(message)
+        confirmation = only_numeric(message)
         if confirmation["rc"] == 0:
             response = {"rc": 0, "msg": "Process OK"}
             confirmationTime = datetime.now() - user["date-confirmation"]
@@ -356,138 +308,6 @@ def save_user_information(user, message, db):
         return response
 
     return response
-
-
-def user_origination(user, db):
-    data = {"card-number": "000712", "exp-date": "0320", "document-type": "CC", "document-number": "16084701",
-            "name-1": " ", "name-2": " ", "last-name-1": "", "last-name-2": " ",
-            "birth-date": "01/06/1982", "birth-place": " ", "nationality": "THEWORLD", "sex": "M",
-            "marital-status": "S", "phone-1": " ", "phone-2": "00000000000", "phone-3": "00000000000",
-            "email": "yecidaltahona1990@hotmail.com", "address-1": "Carrera 11 # 10 - 12",
-            "code-address-1": "11001",
-            "address-2": "Carrera 11 # 10 - 12", "code-address-2": "11001", "ocupation": "SOME",
-            "work-status": "1", "work-center": "SOME PLACE", "work-center-id": "00000000",
-            "work-center-position": "SOMEINFO", "monthly-income": "1.000,00", "govt-emp": "0",
-            "govt-center": "", "branch-id": "1", "request-user": "JMENESES"}
-
-    account = get_account_from_pool(db)
-
-    data["card-number"] = account["cardNumber"]
-    data["exp-date"] = account["fechaExp"]
-    data["document-type"] = get_user_document_type(user)
-    data["document-number"] = user["document"]["documentNumber"]
-    data["name-1"] = user["first_name"]
-    data["last-name-1"] = user["last_name"]
-    data["last-name-2"] = user["last_name"]
-    data["birth-place"] = user["location"]["Address"]["Country"]
-    data["phone-1"] = user["cellphone"]
-    data["address-2"] = user["location"]["Address"]["Label"]
-
-    api_headers = {"x-country": "Usd",
-                   "language": "es",
-                   "channel": "API",
-                   "accept": "application/json",
-                   "Content-Type": "application/json",
-                   "Authorization": "Bearer $OAUTH2TOKEN$"}
-
-    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
-
-    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
-          + account["indx"] + "/employee?trxid=" + str(random_with_n_digits(10))
-
-    api_response = np_api_request(url=url, data=data, api_headers=api_headers)
-    if api_response.status_code == 200:
-        db.accountPool.update({"_id": str(account["_id"])},
-                              {'$set': {"codMisc": "AF"}})
-        db.users.update({"id": user["id"]},
-                        {'$set': {"accountId": account["_id"]}})
-        return "OK", 200, account
-    else:
-        return api_response.text, api_response.status_code
-
-
-def get_user_balance(user, db):
-    account = db.accountPool.find_one({"_id": user["accountId"]})
-    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
-          + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
-          + "/balance-inq?trxid=" + str(random_with_n_digits(10))
-    api_headers = {"x-country": "Usd",
-                   "language": "es",
-                   "channel": "API",
-                   "accept": "application/json",
-                   "Content-Type": "application/json",
-                   "Authorization": "Bearer $OAUTH2TOKEN$"}
-    image_url = os.environ["IMAGES_URL"]
-    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
-    api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
-    if api_response.status_code == 200:
-        attachment = {"type": "template"}
-        payload = {"template_type": "generic", "elements": []}
-        balance = json.dumps(api_response.text)
-        elements = {"title": "Tarjeta: " + balance["card-number"],
-                    "subtitle": "available-balance: " + balance["available-balance"],
-                    "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}
-        payload["elements"].append(elements)
-        attachment["payload"] = payload
-        recipient = {"id": user["id"]}
-        rsp_message = {"attachment": attachment}
-        data = {"recipient": recipient, "message": rsp_message}
-        log(data)
-        requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                      headers=headers, data=json.dumps(data))
-        return "OK", 200
-    else:
-        attachment = {"type": "template"}
-        payload = {"template_type": "generic", "elements": []}
-        elements = {"title": "En estos momentos no pude procesar tu operación.",
-                    "subtitle": "available-balance: 0.00",
-                    "image_url": image_url + "?file=products/Tarjeta-Plata_NB.png"}
-        payload["elements"].append(elements)
-        attachment["payload"] = payload
-        recipient = {"id": user["id"]}
-        rsp_message = {"attachment": attachment}
-        data = {"recipient": recipient, "message": rsp_message}
-        log(data)
-        requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                      headers=headers, data=json.dumps(data))
-        # send_message(user["id"], "En estos momentos no pude procesar tu operación.")
-        return "OK", 200
-
-
-def np_api_request(url, data, api_headers, api_params=None, http_method=None):
-    log("Conectando a: " + url)
-    if http_method is "GET":
-        api_response = requests.get(url, headers=api_headers)
-    else:
-        log("Data:" + json.dumps(data))
-        api_response = requests.post(url, params=api_params, headers=api_headers, data=json.dumps(data))
-
-    log("response: " + api_response.text)
-    log("status_code: " + str(api_response.status_code))
-    if api_response.status_code == 401:
-        np_oauth_token = get_oauth_token()
-        api_headers["Authorization"] = "Bearer " + np_oauth_token
-        return np_api_request(url, data, api_headers, api_params, http_method)
-    else:
-        return api_response
-
-
-def get_user_document_type(user):
-    if user["document"]["documentType"] == "cedula":
-        return "CC"
-    else:
-        return "PA"
-
-
-def get_account_from_pool(db):
-    criteria = {"codMisc": "SA"}
-    return db.accountPool.find_one(criteria)
-
-
-def random_with_n_digits(n):
-    range_start = 10 ** (n - 1)
-    range_end = (10 ** n) - 1
-    return randint(range_start, range_end)
 
 
 def generator(categories, db, user):
@@ -541,7 +361,7 @@ def get_document_type(categories):
         return categories[categories.index("passport")]
 
 
-def only_numerics(text):
+def only_numeric(text):
     log("onlyNumerics: " + text)
     numbs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     resp = ""
@@ -631,17 +451,17 @@ def send_options(recipient_id, options, text):
         "Content-Type": "application/json"
     }
     data = json.dumps({
-              "recipient": {
-                "id": recipient_id
-              },
-              "message":{
-                "text": text,
-                "quick_replies": [
-                    options[0],
-                    options[1]
-                ]
-              }
-            })
+        "recipient": {
+            "id": recipient_id
+        },
+        "message": {
+            "text": text,
+            "quick_replies": [
+                options[0],
+                options[1]
+            ]
+        }
+    })
     log(data)
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
@@ -654,25 +474,25 @@ def accept_tyc(recipient_id):
         "Content-Type": "application/json"
     }
     data = json.dumps({
-              "recipient": {
-                "id": recipient_id
-              },
-              "message":{
-                "text": "Solo tienes que hacer clic en \"Acepto\" para iniciar...",
-                "quick_replies": [
-                    {
-                        "content_type": "text",
-                        "title": "Acepto",
-                        "payload": "POSTBACK_PAYLOAD"
-                    },
-                    {
-                        "content_type": "text",
-                        "title": "No Acepto",
-                        "payload": "POSTBACK_PAYLOAD"
-                    }
-                ]
-              }
-            })
+        "recipient": {
+            "id": recipient_id
+        },
+        "message": {
+            "text": "Solo tienes que hacer clic en \"Acepto\" para iniciar...",
+            "quick_replies": [
+                {
+                    "content_type": "text",
+                    "title": "Acepto",
+                    "payload": "POSTBACK_PAYLOAD"
+                },
+                {
+                    "content_type": "text",
+                    "title": "No Acepto",
+                    "payload": "POSTBACK_PAYLOAD"
+                }
+            ]
+        }
+    })
     log(data)
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
@@ -685,53 +505,53 @@ def send_operations(recipient_id):
         "Content-Type": "application/json"
     }
     data = json.dumps({
-                        "recipient":{
-                          "id": recipient_id
-                           },
-                           "message": {
-                              "attachment": {
-                                 "type": "template",
-                                 "payload": {
-                                    "template_type":"generic",
-                                    "elements": [
-                                       {
-                                          "title": "Enviar Dinero",
-                                          "subtitle": "Envia dinero a tus amigos registrados o no registrados.",
-                                          "buttons": [
-                                             {
-                                                "type": "postback",
-                                                "title": "Enviar Dinero",
-                                                "payload": "PAYBILL_PAYLOAD"
-                                             }
-                                          ]
-                                       },
-                                       {
-                                          "title":"Consulta de Saldo",
-                                          "subtitle": "Consulta el saldo Disponible de tus tarjetas.",
-                                          "buttons":[
-                                             {
-                                                "type": "postback",
-                                                "title": "Saldos",
-                                                "payload": "BALANCE_PAYLOAD"
-                                             }
-                                          ]
-                                       },
-                                       {
-                                          "title":"Consulta de Movimientos",
-                                          "subtitle": "Consulta las operaciones realizadas.",
-                                          "buttons": [
-                                             {
-                                                "type": "postback",
-                                                "title": "Movimientos",
-                                                "payload": "MOVEMENTS_PAYLOAD"
-                                             }
-                                          ]
-                                       }
-                                    ]
-                                 }
-                              }
-                           }
-                        })
+        "recipient": {
+            "id": recipient_id
+        },
+        "message": {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "generic",
+                    "elements": [
+                        {
+                            "title": "Enviar Dinero",
+                            "subtitle": "Envia dinero a tus amigos registrados o no registrados.",
+                            "buttons": [
+                                {
+                                    "type": "postback",
+                                    "title": "Enviar Dinero",
+                                    "payload": "PAYBILL_PAYLOAD"
+                                }
+                            ]
+                        },
+                        {
+                            "title": "Consulta de Saldo",
+                            "subtitle": "Consulta el saldo Disponible de tus tarjetas.",
+                            "buttons": [
+                                {
+                                    "type": "postback",
+                                    "title": "Saldos",
+                                    "payload": "BALANCE_PAYLOAD"
+                                }
+                            ]
+                        },
+                        {
+                            "title": "Consulta de Movimientos",
+                            "subtitle": "Consulta las operaciones realizadas.",
+                            "buttons": [
+                                {
+                                    "type": "postback",
+                                    "title": "Movimientos",
+                                    "payload": "MOVEMENTS_PAYLOAD"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    })
     log(data)
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
@@ -750,23 +570,6 @@ def classification(sentence, registered, db):
     return my_categories
 
 
-def log(message):  # simple wrapper for logging to stdout on heroku
-    print(str(message))
-    sys.stdout.flush()
-
-
-def get_mongodb():
-    try:
-        db = None
-        log(os.environ["MONGO"])
-        _dev = pymongo.MongoClient(os.environ["MONGO"])
-        db = _dev[os.environ["SCHEMA"]]
-    except Exception as e:
-        log("Error: " + str(e.args))
-    return db
-
-
 if __name__ == '__main__':
     log(np_oauth_token)
     app.run(debug=True)
-
