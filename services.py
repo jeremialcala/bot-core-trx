@@ -172,8 +172,6 @@ def create_mov_attachment(user, mov_list, db=get_mongodb):
                     "subtitle": "💰" + mov["mov-amount"] + "\n🗓️" + mov["mov-date"]
                 })
             mov_count += 1
-    db.movements.update({"_id": ObjectId(mov_list["_id"])},
-                        {"page": mov_list["page"] + 1})
     payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                 str(mov_list["_id"])}]
     attachment["payload"] = payload
@@ -183,5 +181,6 @@ def create_mov_attachment(user, mov_list, db=get_mongodb):
     log(data)
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                   headers=headers, data=json.dumps(data))
-    return attachment
+    db.movements.update({"_id": ObjectId(mov_list["_id"])},
+                        {"page": mov_list["page"] + 1})
 
