@@ -22,7 +22,7 @@ headers = {
 objects = []
 np_oauth_token = get_oauth_token()
 
-from services import user_origination, get_user_balance
+from services import user_origination, get_user_balance, get_user_movements
 
 
 @app.route('/', methods=['GET'])
@@ -140,6 +140,11 @@ def get_message():
                 if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
                     if user["registedStatus"] == 6:
                         get_user_balance(user, db)
+                        return "OK", 200
+
+                if messaging["postback"]["payload"] == "MOVEMENTS_PAYLOAD":
+                    if user["registedStatus"] == 6:
+                        get_user_movements(user, db)
                         return "OK", 200
 
                 if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":

@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request
-from app import np_oauth_token, headers, params
+from app import np_oauth_token, headers, params, send_message
 
 
 def user_origination(user, db):
@@ -99,3 +99,76 @@ def get_user_balance(user, db):
                       headers=headers, data=json.dumps(data))
         # send_message(user["id"], "En estos momentos no pude procesar tu operación.")
         return "OK", 200
+
+
+def get_user_movements(user, db, mov_id=None):
+    account = db.accountPool.find_one({"_id": user["accountId"]})
+
+    if mov_id is None:
+        url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
+              + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
+              + "/mov-inq?trxid=" + str(random_with_n_digits(10))
+        api_headers = {"x-country": "Usd",
+                       "language": "es",
+                       "channel": "API",
+                       "accept": "application/json",
+                       "Content-Type": "application/json",
+                       "Authorization": "Bearer $OAUTH2TOKEN$"}
+        api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
+        api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
+        if api_response.status_code == 200:
+            response = json.loads(api_response.text)
+            if "mov-list" in response:
+                movements = {
+                    "userId": user["id"],
+                    "movements": response["mov-list"],
+                    "count": len(response["mov-list"]),
+                    "page": 1,
+                    "status": 1
+                }
+                mov_id = db.movements.insert(movements)
+                movements["_id"] = mov_id
+            attachment = create_mov_attachment(movements)
+        else:
+            send_message(user["id"], "En estos momentos no pudimos procesar tu operación.")
+            return "OK", 200
+
+    else:
+        criteria = {"userId": user["id"], "status": 1}
+        movements = db.movements.find_one(criteria)
+        pages = movements["count"] / 4
+
+        if movements is None:
+            send_message(user["id"], "No se encontraron movimientos...")
+            return "OK", 200
+
+        if movements["status"] == 0 or pages == movements["page"]:
+            send_message(user["id"], "No hay mas movimientos...")
+            return "OK", 200
+        attachment = create_mov_attachment(movements, mov_id)
+
+    recipient = {"id": user["id"]}
+    rsp_message = {"attachment": attachment}
+    data = {"recipient": recipient, "message": rsp_message}
+    log(data)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                  headers=headers, data=json.dumps(data))
+    return "OK", 200
+
+
+def create_mov_attachment(mov_list):
+    attachment = {"type": "template"}
+    payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
+    mov_count = 0
+    for mov in mov_list["movements"]:
+        if mov_count > (4 * mov_list["page"]):
+            payload["elements"].append(
+                {
+                    "title": mov["mov-desc"],
+                    "subtitle": "💰" + mov["mov-amount"] + "\n🗓️" + mov["mov-date"]
+                })
+            payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENTS_"
+                                                                                        + str(mov_list["_id"])}]
+            attachment["payload"] = payload
+    return attachment
+
