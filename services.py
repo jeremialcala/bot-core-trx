@@ -147,7 +147,7 @@ def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
             send_message(user["id"], "No se encontraron movimientos...")
             return "OK", 200
 
-        if movements["status"] == 0 or movements["page"] >= 4:
+        if movements["status"] == 0 or movements["page"] >= movements["count"]:
             db.movements.update({"_id": ObjectId(mov_id)},
                                 {'$set': {"status": 0}})
             send_message(user["id"], "No hay mas movimientos...")
