@@ -176,7 +176,6 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     recipient = {"id": user["id"]}
     rsp_message = {"attachment": attachment}
     data = {"recipient": recipient, "message": rsp_message}
-    log(data)
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                   headers=headers, data=json.dumps(data))
     db.movements.update({"_id": ObjectId(mov_list["_id"])},

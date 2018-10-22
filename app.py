@@ -111,8 +111,18 @@ def get_message():
                             return "OK", 200
 
                     categories = classification(message, False, db)
+
+                    if user["registedStatus"] == 6:
+                        if "balance" in categories:
+                            get_user_balance(user, db)
+                            return "OK", 200
+                        if "movements" in categories:
+                            get_user_movements(user, db)
+                            return "OK", 200
+
                     log(categories)
                     response = generator(categories, db, user)
+
                     log(response)
                     user = response["user"]
                     send_message(user["id"], response["msg"])
@@ -362,6 +372,7 @@ def generator(categories, db, user):
                                           "date-registedStatus": datetime.now()}})
                 message = "indicame tu numero de celular"
 
+
     return {"user": user, "msg": message}
 
 
@@ -397,6 +408,7 @@ def get_user_by_id(user_id):
         return r.text
     else:
         return r.text
+
 
 def send_termandc(recipient_id):
     params = {
