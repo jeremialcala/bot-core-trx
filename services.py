@@ -3,7 +3,8 @@ import json
 import requests
 from bson import ObjectId
 
-from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request, send_message
+from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request, \
+    send_message, get_mongodb
 from app import np_oauth_token, headers, params
 
 
@@ -152,6 +153,8 @@ def get_user_movements(user, db, mov_id=None):
 
         pages = movements["count"] / 4
         if movements["status"] == 0 or pages == movements["page"]:
+            db.movements.update({"_id": ObjectId(mov_id)},
+                                {"status": 0})
             send_message(user["id"], "No hay mas movimientos...")
             return "OK", 200
 
@@ -166,7 +169,7 @@ def get_user_movements(user, db, mov_id=None):
         return "OK", 200
 
 
-def create_mov_attachment(mov_list):
+def create_mov_attachment(mov_list, db=get_mongodb):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = 0
@@ -178,7 +181,8 @@ def create_mov_attachment(mov_list):
                     "subtitle": "💰" + mov["mov-amount"] + "\n🗓️" + mov["mov-date"]
                 })
             mov_count += 1
-
+    db.movements.update({"_id": ObjectId(mov_list["_id"])},
+                        {"page": mov_list["page"] + 1})
     payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                 str(mov_list["_id"])}]
     attachment["payload"] = payload
