@@ -131,16 +131,16 @@ def get_user_movements(user, db, mov_id=None):
                     "page": 1,
                     "status": 1
                 }
-                mov_id = db.movements.insert(movements)
-                movements["_id"] = mov_id
-                attachment = create_mov_attachment(movements)
-                recipient = {"id": user["id"]}
-                rsp_message = {"attachment": attachment}
-                data = {"recipient": recipient, "message": rsp_message}
-                log(data)
-                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                              headers=headers, data=json.dumps(data))
-                return "OK", 200
+            mov_id = db.movements.insert(movements)
+            movements["_id"] = mov_id
+            attachment = create_mov_attachment(movements)
+            recipient = {"id": user["id"]}
+            rsp_message = {"attachment": attachment}
+            data = {"recipient": recipient, "message": rsp_message}
+            log(data)
+            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                          headers=headers, data=json.dumps(data))
+            return "OK", 200
         else:
             send_message(user["id"], "En estos momentos no pudimos procesar tu operación.")
             return "OK", 200
@@ -175,6 +175,7 @@ def create_mov_attachment(mov_list, db=get_mongodb):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = 0
+    log(mov_list)
     for mov in mov_list["movements"]:
         if mov_count < (4 * mov_list["page"]):
             payload["elements"].append(
