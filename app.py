@@ -150,7 +150,7 @@ def get_message():
                 if "MOVEMENT_" in messaging["postback"]["payload"]:
                     if user["registedStatus"] == 6:
                         payload = messaging["postback"]["payload"].split("_")
-                        get_user_movements(user, db, payload[1])
+                        get_user_movements(user=user, db=db, mov_id=payload[1])
                         return "OK", 200
 
                 if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":

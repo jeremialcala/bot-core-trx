@@ -175,6 +175,7 @@ def create_mov_attachment(mov_list):
                     "subtitle": "💰" + mov["mov-amount"] + "\n🗓️" + mov["mov-date"]
                 })
             mov_count += 1
+
     payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                 str(mov_list["_id"])}]
     attachment["payload"] = payload
