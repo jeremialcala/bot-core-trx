@@ -175,8 +175,8 @@ def create_mov_attachment(mov_list, db=get_mongodb):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = 0
-    log(mov_list)
     for mov in mov_list["movements"]:
+        log(mov)
         if mov_count <= (4 * mov_list["page"]):
             payload["elements"].append(
                 {
