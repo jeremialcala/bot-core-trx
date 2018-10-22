@@ -1,6 +1,8 @@
 import os
 import json
 import requests
+from bson import ObjectId
+
 from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request, send_message
 from app import np_oauth_token, headers, params
 
@@ -141,7 +143,7 @@ def get_user_movements(user, db, mov_id=None):
             return "OK", 200
 
     else:
-        criteria = {"_id": mov_id, "status": 1}
+        criteria = {"_id": ObjectId(mov_id), "status": 1}
         movements = db.movements.find_one(criteria)
 
         if movements is None:
