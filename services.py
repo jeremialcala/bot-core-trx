@@ -165,7 +165,7 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     mov_count = 0
     for mov in mov_list["movements"]:
         log(mov)
-        if mov_count <= (4 * mov_list["page"]):
+        if mov_count < (4 * mov_list["page"]):
             payload["elements"].append(
                 {
                     "title": mov["mov-desc"],
@@ -182,5 +182,5 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                   headers=headers, data=json.dumps(data))
     db.movements.update({"_id": ObjectId(mov_list["_id"])},
-                        {"page": mov_list["page"] + 1})
+                        {'$set':{"page": mov_list["page"] + 1}})
 
