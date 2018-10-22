@@ -147,7 +147,7 @@ def get_message():
                         get_user_movements(user, db)
                         return "OK", 200
 
-                if "MOVEMENTS_" in messaging["postback"]["payload"]:
+                if "MOVEMENT_" in messaging["postback"]["payload"]:
                     if user["registedStatus"] == 6:
                         payload = messaging["postback"]["payload"].split("_")
                         get_user_movements(user, db, payload[1])
