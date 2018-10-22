@@ -4,11 +4,11 @@ import requests
 from bson import ObjectId
 
 from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request, \
-    send_message, get_mongodb
-from app import np_oauth_token, headers, params
+    send_message, get_mongodb, get_oauth_token
+from app import headers, params
 
 
-def user_origination(user, db):
+def user_origination(user, db, np_oauth_token=get_oauth_token()):
     data = {"card-number": "000712", "exp-date": "0320", "document-type": "CC", "document-number": "16084701",
             "name-1": " ", "name-2": " ", "last-name-1": "", "last-name-2": " ",
             "birth-date": "01/06/1982", "birth-place": " ", "nationality": "THEWORLD", "sex": "M",
@@ -56,7 +56,7 @@ def user_origination(user, db):
         return api_response.text, api_response.status_code
 
 
-def get_user_balance(user, db):
+def get_user_balance(user, db, np_oauth_token=get_oauth_token()):
     account = db.accountPool.find_one({"_id": user["accountId"]})
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
           + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
@@ -104,7 +104,7 @@ def get_user_balance(user, db):
         return "OK", 200
 
 
-def get_user_movements(user, db, mov_id=None):
+def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
     account = db.accountPool.find_one({"_id": user["accountId"]})
     log(mov_id)
     if mov_id is None:
