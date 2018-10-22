@@ -141,14 +141,14 @@ def get_user_movements(user, db, mov_id=None):
             return "OK", 200
 
     else:
-        criteria = {"_id": mov_id, "userId": user["id"], "status": 1}
+        criteria = {"_id": mov_id, "status": 1}
         movements = db.movements.find_one(criteria)
-        pages = movements["count"] / 4
 
         if movements is None:
             send_message(user["id"], "No se encontraron movimientos...")
             return "OK", 200
 
+        pages = movements["count"] / 4
         if movements["status"] == 0 or pages == movements["page"]:
             send_message(user["id"], "No hay mas movimientos...")
             return "OK", 200
