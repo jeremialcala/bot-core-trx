@@ -76,7 +76,7 @@ def get_user_balance(user, db):
         balance = json.loads(api_response.text)
         elements = {"title": "Tarjeta: " + balance["card-number"],
                     "subtitle": "available-balance: " + balance["available-balance"],
-                    "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}
+                    "image_url": image_url + "?file=products/Tarjeta-Plata_NB.png"}
         payload["elements"].append(elements)
         attachment["payload"] = payload
         recipient = {"id": user["id"]}
