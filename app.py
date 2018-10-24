@@ -268,27 +268,25 @@ def save_user_information(user, message, db):
     if user["registedStatus"] == 4:
         cellphone = only_numeric(message)
         if cellphone["rc"] == 0:
-            result = db.country.find({"name": user["location"]["Address"]["Country"]})
-            if result.count() is not 0:
-                for document in result:
-                    country = document
-                    confirmation = random_with_n_digits(5)
-                    client = Client(os.environ["ACCOUNT_ID"], os.environ["AUTH_TOKEN"])
-                    response = {"rc": 0, "msg": "Process OK"}
-                    message = client.messages.create(
-                        from_=os.environ["SMS_ORI"],
-                        to=country["code"] + cellphone["numbers"],
-                        body="Tu clave de temporal es: " + str(confirmation)
-                    )
-                    send_message(user["id"],
-                                 "Muy bien! Te acabo de enviar el código a tu celular, me lo indicas por favor.")
-                    db.users.update({"id": user['id']},
-                                    {'$set': {"registedStatus": 5,
-                                              "date-registedStatus": datetime.now(),
-                                              "cellphone": country["code"] + cellphone["numbers"],
-                                              "date-confirmation": datetime.now(),
-                                              "confirmation": confirmation,
-                                              "date-cellphone": datetime.now()}})
+            country = db.country.find_one({"name": user["location"]["Address"]["AdditionalData"][0]["value"]})
+            if country is not None:
+                confirmation = random_with_n_digits(5)
+                client = Client(os.environ["ACCOUNT_ID"], os.environ["AUTH_TOKEN"])
+                response = {"rc": 0, "msg": "Process OK"}
+                message = client.messages.create(
+                    from_=os.environ["SMS_ORI"],
+                    to=country["code"] + cellphone["numbers"],
+                    body="Tu clave de temporal es: " + str(confirmation)
+                )
+                send_message(user["id"],
+                             "Muy bien! Te acabo de enviar el código a tu celular, me lo indicas por favor.")
+                db.users.update({"id": user['id']},
+                                {'$set': {"registedStatus": 5,
+                                          "date-registedStatus": datetime.now(),
+                                          "cellphone": country["code"] + cellphone["numbers"],
+                                          "date-confirmation": datetime.now(),
+                                          "confirmation": confirmation,
+                                          "date-cellphone": datetime.now()}})
         return response
 
     if user["registedStatus"] == 5:
