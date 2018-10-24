@@ -8,7 +8,7 @@ from utils import log, get_account_from_pool, get_user_document_type, random_wit
 from app import headers, params
 
 
-def user_origination(user, db, np_oauth_token=get_oauth_token()):
+def user_origination(user, db):
     data = {"card-number": "000712", "exp-date": "0320", "document-type": "CC", "document-number": "16084701",
             "name-1": " ", "name-2": " ", "last-name-1": "", "last-name-2": " ",
             "birth-date": "01/06/1982", "birth-place": " ", "nationality": "THEWORLD", "sex": "M",
@@ -40,7 +40,7 @@ def user_origination(user, db, np_oauth_token=get_oauth_token()):
                    "Content-Type": "application/json",
                    "Authorization": "Bearer $OAUTH2TOKEN$"}
 
-    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
+    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", os.environ["NP_OAUTH2_TOKEN"])
 
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
           + account["indx"] + "/employee?trxid=" + str(random_with_n_digits(10))
@@ -56,7 +56,7 @@ def user_origination(user, db, np_oauth_token=get_oauth_token()):
         return api_response.text, api_response.status_code
 
 
-def get_user_balance(user, db, np_oauth_token=get_oauth_token()):
+def get_user_balance(user, db):
     account = db.accountPool.find_one({"_id": user["accountId"]})
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
           + account["indx"] + "/employee/" + user["document"]["documentNumber"] \
@@ -68,7 +68,7 @@ def get_user_balance(user, db, np_oauth_token=get_oauth_token()):
                    "Content-Type": "application/json",
                    "Authorization": "Bearer $OAUTH2TOKEN$"}
     image_url = os.environ["IMAGES_URL"]
-    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
+    api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", os.environ["NP_OAUTH2_TOKEN"])
     api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
     if api_response.status_code == 200:
         attachment = {"type": "template"}
@@ -104,7 +104,7 @@ def get_user_balance(user, db, np_oauth_token=get_oauth_token()):
         return "OK", 200
 
 
-def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
+def get_user_movements(user, db, mov_id=None):
     account = db.accountPool.find_one({"_id": user["accountId"]})
     log(mov_id)
     if mov_id is None:
@@ -118,7 +118,9 @@ def get_user_movements(user, db, mov_id=None, np_oauth_token=get_oauth_token()):
                        "accept": "application/json",
                        "Content-Type": "application/json",
                        "Authorization": "Bearer $OAUTH2TOKEN$"}
-        api_headers["Authorization"] = api_headers["Authorization"].replace("$OAUTH2TOKEN$", np_oauth_token)
+
+        api_headers["Authorization"] = api_headers["Authorization"]\
+            .replace("$OAUTH2TOKEN$", os.environ["NP_OAUTH2_TOKEN"])
 
         api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
         if api_response.status_code == 200:
