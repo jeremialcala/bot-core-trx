@@ -73,7 +73,7 @@ def get_user_balance(user, db):
     if api_response.status_code == 200:
         attachment = {"type": "template"}
         payload = {"template_type": "generic", "elements": []}
-        balance = json.dumps(api_response.text)
+        balance = json.loads(api_response.text)
         elements = {"title": "Tarjeta: " + balance["card-number"],
                     "subtitle": "available-balance: " + balance["available-balance"],
                     "image_url": image_url + "?file=product/Tarjeta-Plata_NB.png"}

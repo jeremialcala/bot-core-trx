@@ -3,6 +3,7 @@ import requests
 import json
 import os
 import sys
+import re
 from random import randint
 
 
@@ -124,4 +125,12 @@ def send_message(recipient_id, message_text):
         }
     })
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+
+
+def validate_re(pattern, text):
+    match = re.match(pattern, str(text))
+    print(match)
+    if match is None:
+        return False
+    return True
 
