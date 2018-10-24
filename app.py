@@ -169,8 +169,8 @@ def get_message():
 
                 if user["registedStatus"] == 0:
                     send_message(user["id"], "Aun no terminas tu registro...")
-                    options = [{"content_type": "text", "title": "Cedula", "payload": "POSTBACK_PAYLOAD"},
-                               {"content_type": "text", "title": "Pasaporte", "payload": "GET_STARTED_PAYLOAD"}]
+                    options = [{"content_type": "text", "title": "Cedula", "payload": "DNI_PAYLOAD"},
+                               {"content_type": "text", "title": "Pasaporte", "payload": "PASSPORT_PAYLOAD"}]
                     send_options(user["id"], options, "que tipo de documento tienes?")
                     return "OK", 200
 
@@ -200,6 +200,10 @@ def get_message():
                     options = [{"content_type": "text", "title": "SMS", "payload": "SMS_PAYLOAD"},
                                {"content_type": "text", "title": "Correo", "payload": "EMAIL_PAYLOAD"}]
                     send_options(user["id"], options, "por donde prefieres recibirlo?")
+                    return "OK", 200
+
+                if user["registedStatus"] == 4:
+                    send_message(user["id"], "indicame tu numero de celular")
                     return "OK", 200
 
                 if messaging["postback"]["payload"] == "PAYBILL_PAYLOAD":
