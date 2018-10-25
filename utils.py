@@ -83,7 +83,7 @@ def np_api_request(url, data, api_headers, api_params=None, http_method=None):
     log("response: " + api_response.text)
     log("status_code: " + str(api_response.status_code))
     if api_response.status_code == 401:
-        os.environ.setdefault("NP_OAUTH2_TOKEN", get_oauth_token())
+        os.environ["NP_OAUTH2_TOKEN"] = get_oauth_token()
         api_headers["Authorization"] = "Bearer " + os.environ["NP_OAUTH2_TOKEN"]
         return np_api_request(url, data, api_headers, api_params, http_method)
     else:
