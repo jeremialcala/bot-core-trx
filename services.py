@@ -174,13 +174,16 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     attachment = {"type": "template"}
     payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
     mov_count = mov_list["page"]
-    for x in range(mov_list["page"], (4 + mov_list["page"])):
-        log(mov_list["movements"][x])
+
+    while len(payload["elements"]) < 4:
+        log(mov_list["movements"][mov_count])
         payload["elements"].append(
             {
-                "title": mov_list["movements"][x]["mov-desc"],
-                "subtitle": "💰" + mov_list["movements"][x]["mov-amount"] + "\n🗓️" + mov_list["movements"][x]["mov-date"]
+                "title": mov_list["movements"][mov_count]["mov-desc"],
+                "subtitle": "💰" + mov_list["movements"][mov_count]["mov-amount"] +
+                            "\n🗓️" + mov_list["movements"][mov_count]["mov-date"]
             })
+        mov_count = mov_count + 1
 
     payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                 str(mov_list["_id"])}]
@@ -191,5 +194,5 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                   headers=headers, data=json.dumps(data))
     db.movements.update({"_id": ObjectId(mov_list["_id"])},
-                        {'$set': {"page": mov_count + 4}})
+                        {'$set': {"page": mov_count}})
 
