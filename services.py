@@ -137,6 +137,8 @@ def get_user_movements(user, db, mov_id=None):
             movements["_id"] = mov_id
             create_mov_attachment(user, movements)
             return "OK", 200
+        elif api_response.status_code == 404:
+            send_message(user["id"], "No tienes movimientos registrados.")
         else:
             send_message(user["id"], "En estos momentos no pudimos procesar tu operación.")
             return "OK", 200
