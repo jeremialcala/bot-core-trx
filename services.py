@@ -185,11 +185,13 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
             })
         mov_count = mov_count + 1
 
+    if mov_list["count"] > 1:
+        payload["top_element_style"] = "compact"
+        payload["template_type"] = "list"
+
     if mov_list["count"] > 4:
         payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
                                                                                     str(mov_list["_id"])}]
-        payload["top_element_style"] = "compact"
-        payload["template_type"] = "list"
 
     attachment["payload"] = payload
     recipient = {"id": user["id"]}
