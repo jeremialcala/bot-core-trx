@@ -4,7 +4,7 @@ import requests
 from bson import ObjectId
 
 from utils import log, get_account_from_pool, get_user_document_type, random_with_n_digits, np_api_request, \
-    send_message, get_mongodb, get_oauth_token
+    send_message, get_mongodb
 from app import headers, params
 
 
@@ -47,8 +47,8 @@ def user_origination(user, db):
 
     api_response = np_api_request(url=url, data=data, api_headers=api_headers)
     if api_response.status_code == 200:
-        db.accountPool.update({"_id": str(account["_id"])},
-                              {'$set': {"codMisc": "AF"}})
+        db.accountPool.update({"_id": ObjectId(account["_id"])},
+                              {"$set": {"codMisc": "AF"}})
         db.users.update({"id": user["id"]},
                         {'$set': {"accountId": account["_id"]}})
         return "OK", 200, account
