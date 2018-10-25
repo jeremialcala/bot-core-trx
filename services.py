@@ -135,11 +135,11 @@ def get_user_movements(user, db, mov_id=None):
                     "status": 1
                 }
                 print(type(response["mov-list"]))
-                if type(response["mov-list"]) is list:
+                if type(response["mov-list"]) is dict:
+                    movements["movements"].append(response["mov-list"])
+                else:
                     movements["movements"] = response["mov-list"]
                     movements["count"] = len(response["mov-list"])
-                else:
-                    movements["movements"].append(response["mov-list"])
 
             mov_id = db.movements.insert(movements)
             movements["_id"] = mov_id
