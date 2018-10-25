@@ -172,7 +172,7 @@ def get_user_movements(user, db, mov_id=None):
 
 def create_mov_attachment(user, mov_list, db=get_mongodb()):
     attachment = {"type": "template"}
-    payload = {"template_type": "list", "top_element_style": "compact", "elements": []}
+    payload = {"template_type": "generic", "elements": []}
     mov_count = mov_list["page"]
 
     while len(payload["elements"]) < 4 and mov_count < len(mov_list["movements"]):
@@ -185,14 +185,19 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
             })
         mov_count = mov_count + 1
 
-    payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
-                                                                                str(mov_list["_id"])}]
+    if mov_list["count"] > 4:
+        payload["buttons"] = [{"title": "View More", "type": "postback", "payload": "MOVEMENT_" +
+                                                                                    str(mov_list["_id"])}]
+        payload["top_element_style"] = "compact"
+        payload["template_type"] = "list"
+
     attachment["payload"] = payload
     recipient = {"id": user["id"]}
     rsp_message = {"attachment": attachment}
     data = {"recipient": recipient, "message": rsp_message}
-    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                  headers=headers, data=json.dumps(data))
+    rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                        headers=headers, data=json.dumps(data))
+    log(rsp)
     db.movements.update({"_id": ObjectId(mov_list["_id"])},
                         {'$set': {"page": mov_count}})
 
