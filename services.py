@@ -134,6 +134,7 @@ def get_user_movements(user, db, mov_id=None):
                     "page": 0,
                     "status": 1
                 }
+                print(type(response["mov-list"]))
                 if type(response["mov-list"]) is list:
                     movements["movements"] = response["mov-list"]
                     movements["count"] = len(response["mov-list"])
