@@ -75,7 +75,7 @@ def get_user_balance(user, db):
         payload = {"template_type": "generic", "elements": []}
         balance = json.loads(api_response.text)
         elements = {"title": "Tarjeta: " + balance["card-number"],
-                    "subtitle": "available-balance: " + balance["available-balance"],
+                    "subtitle": "Saldo Disponible: " + balance["available-balance"],
                     "image_url": image_url + "?file=products/Tarjeta-Plata_NB.png"}
         payload["elements"].append(elements)
         attachment["payload"] = payload
@@ -125,14 +125,21 @@ def get_user_movements(user, db, mov_id=None):
         api_response = np_api_request(url=url, data=None, api_headers=api_headers, http_method="GET")
         if api_response.status_code == 200:
             response = json.loads(api_response.text)
+
             if "mov-list" in response:
                 movements = {
                     "userId": user["id"],
-                    "movements": response["mov-list"],
-                    "count": len(response["mov-list"]),
+                    "movements": [],
+                    "count": 1,
                     "page": 0,
                     "status": 1
                 }
+                if type(response["mov-list"]) is list:
+                    movements["movements"] = response["mov-list"]
+                    movements["count"] = len(response["mov-list"])
+                else:
+                    movements["movements"].append(response["mov-list"])
+
             mov_id = db.movements.insert(movements)
             movements["_id"] = mov_id
             create_mov_attachment(user, movements)
