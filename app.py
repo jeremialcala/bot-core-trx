@@ -109,7 +109,10 @@ def get_message():
                         transaction = db.transactions.find_one({"_id": ObjectId(action[3])})
                         account = db.accountPool.find_one({"_id": ObjectId(user["accountId"])})
                         friend = db.users.find_one({"id": transaction["recipient"]})
-                        log(action)
+
+                        for item in action:
+                            print(type(item))
+
                         if action[1] is "N":
                             payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
                                        "order_number": str(transaction["_id"]), "currency": "USD",
@@ -137,14 +140,15 @@ def get_message():
                             return "OK", 200
 
                         if action[1] is "Y":
-                            send_options(user["id"], options, "indicame la descripcion del envio?")
+                            send_message(user["id"], "indicame la descripcion del envio?")
                             return "OK", 200
 
-                        if action[2] is "CONFIRM":
-                            log(action)
+                        if str(action[2]) is "CONFIRM":
+                            log("this acction!!!")
                             send_message(user["id"], "Ejecutando")
                             return "OK", 200
-                        if action[2] is "CANCEL":
+
+                        if str(action[2]) is "CANCEL":
                             send_message(user["id"], "Vale! cancelamos tu transaccion")
                             db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                                    {"$set": {"status": 0}})
