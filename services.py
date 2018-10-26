@@ -226,7 +226,7 @@ def execute_send_money(transaction, db=get_mongodb()):
 
     data = {"description": "Envio de dinero FB", "amount": transaction["amount"],
             "fee": "0.00", "ref-number": str(transaction["_id"])}
-    api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method="GET")
+    api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method=None)
 
     if api_response.status_code == 200:
         recipient = db.users.find_one({"id": transaction["recipient"]})
@@ -234,7 +234,7 @@ def execute_send_money(transaction, db=get_mongodb()):
         url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
               + account["indx"] + "/employee/" + recipient["document"]["documentNumber"] \
               + "/credit-inq?trxid=" + str(random_with_n_digits(10))
-        api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method="GET")
+        api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method=None)
         if api_response.status_code == 200:
             send_message(sender["id"], "envio de dinero exitoso")
             send_message(recipient["id"], "Hola " + recipient["first_name"] + " hemos depositado en tu cuenta "
