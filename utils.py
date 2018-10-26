@@ -31,7 +31,6 @@ def get_user_by_name(name, operation, db):
     else:
         criteria = {"first_name": {"$regex": name[0]}}
     log(criteria)
-    image_url = os.environ["IMAGES_URL"]
     result = db.users.find(criteria)
 
     attachment = {"type": "template"}
@@ -44,7 +43,7 @@ def get_user_by_name(name, operation, db):
             buttons = {}
             elements = {"buttons": [], "title": friend["first_name"] + " " + friend["last_name"],
                         "subtitle": friend["location"]["Address"]["Label"],
-                        "image_url": image_url + "?file=profile/" + friend["id"] + ".png"}
+                        "image_url": friend["profile_pic"]}
             buttons["title"] = "Enviar Dinero"
             buttons["type"] = "postback"
             buttons["payload"] = operation + "|" + friend["id"]

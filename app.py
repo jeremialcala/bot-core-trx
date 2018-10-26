@@ -118,7 +118,7 @@ def get_message():
 
                             element = {"title": "Envio de Dinero a " + friend["first_name"],
                                        "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
-                                       "image_url":  os.environ["IMAGES_URL"] + "?file=profile/" + friend["id"] + ".png"}
+                                       "image_url":  friend["profile_pic"]}
                             payload["elements"].append(element)
                             message = {"attachment": {"type": "template", "payload": payload}}
                             data = {"recipient": {"id": user["id"]}, "message": message}
