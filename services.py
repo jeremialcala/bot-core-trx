@@ -218,7 +218,7 @@ def execute_send_money(transaction, db=get_mongodb()):
 
     sender = db.users.find_one({"id": transaction["sender"]})
     log(sender)
-    account_s = db.accountPool.find_one({"id": sender["accountId"]})
+    account_s = db.accountPool.find_one({"_id": ObjectId(sender["accountId"])})
 
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
           + account_s["indx"] + "/employee/" + sender["document"]["documentNumber"] \
@@ -230,7 +230,7 @@ def execute_send_money(transaction, db=get_mongodb()):
 
     if api_response.status_code == 200:
         recipient = db.users.find_one({"id": transaction["recipient"]})
-        account = db.accountPool.find_one({"id": recipient["accountId"]})
+        account = db.accountPool.find_one({"_id": ObjectId(recipient["accountId"])})
         url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
               + account["indx"] + "/employee/" + recipient["document"]["documentNumber"] \
               + "/credit-inq?trxid=" + str(random_with_n_digits(10))
