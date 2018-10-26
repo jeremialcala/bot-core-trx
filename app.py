@@ -142,7 +142,9 @@ def get_message():
                 if "SEND_MONEY" in messaging["postback"]["payload"]:
                     action = messaging["postback"]["payload"].split("|")
                     friend = db.users.find_one({"id": action[1]})
-                    options = [{"content_type": "text", "title": "$5", "payload": "SEND_5"},
+                    options = [{"content_type": "text", "title": "$2", "payload": "SEND_2"},
+                               {"content_type": "text", "title": "$5", "payload": "SEND_5"},
+                               {"content_type": "text", "title": "$8", "payload": "SEND_8"},
                                {"content_type": "text", "title": "$10", "payload": "SEND_10"}]
                     send_options(user["id"], options, "Cuanto 💸 deseas enviale a " + friend["first_name"] + "?")
                     return "OK", 200
@@ -448,26 +450,11 @@ def send_termandc(recipient_id):
 
 
 def send_options(recipient_id, options, text):
-    params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = json.dumps({
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "text": text,
-            "quick_replies": [
-                options[0],
-                options[1]
-            ]
-        }
-    })
+    data = {"recipient": {"id": recipient_id}, "message": {"text": text, "quick_replies": []}}
+    for option in options:
+        data["message"]["quick_replies"].append(option)
     log(data)
-    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=json.dumps(data))
 
 
 def accept_tyc(recipient_id):
