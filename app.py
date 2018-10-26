@@ -143,12 +143,12 @@ def get_message():
                             send_message(user["id"], "indicame la descripcion del envio?")
                             return "OK", 200
 
-                        if str(action[2]) is "CONFIRM":
+                        if "CONFIRM" in messaging["message"]["quick_reply"]["payload"]:
                             log("this acction!!!")
                             send_message(user["id"], "Ejecutando")
                             return "OK", 200
 
-                        if str(action[2]) is "CANCEL":
+                        if "CANCEL" in messaging["message"]["quick_reply"]["payload"]:
                             send_message(user["id"], "Vale! cancelamos tu transaccion")
                             db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                                    {"$set": {"status": 0}})
