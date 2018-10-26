@@ -5,6 +5,7 @@ import urllib.request
 from datetime import datetime
 
 import requests
+from bson import ObjectId
 from flask import Flask, request, send_file
 from twilio.rest import Client
 
@@ -48,7 +49,6 @@ def get_message():
                 return "OK", 200
 
             db = get_mongodb()
-            objects = db.objects.find()
             result = db.users.find({'id': user_id})
             msg = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
 
@@ -126,6 +126,57 @@ def get_message():
 
                     if "greet" in categories:
                         send_operations(user["id"])
+
+                if "quick_reply" in messaging:
+                    if "SEND_" in messaging["quick_reply"]["payload"]:
+                        action = messaging["quick_reply"]["payload"].split("_")
+                        transaction = db.transactions.find_one({"_id": ObjectId(action[2])})
+                        if transaction is None:
+                            send_message(user["id"], "oye " + user["fist_name"]
+                                         + ", no recuerdo a quien querias enviar dinero.")
+                            return "OK", 200
+                        if action[1] is "OTHER":
+                            send_message(user["id"], "indicame el monto que quieres enviar")
+                            return "OK", 200
+                        db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                               {"$set": {"amount": action[1],
+                                                         "status": 3}})
+                        options = [{"content_type": "text", "title": "Si", "payload": "TRX_Y_MSG_" + transaction["_id"]},
+                                   {"content_type": "text", "title": "No", "payload": "TRX_N_MSG_" + transaction["_id"]}]
+                        send_options(user["id"], options, "te gustaria enviar una descripción de tu pago?")
+                        return "OK", 200
+
+                    if "TRX_" in messaging["quick_reply"]["payload"]:
+                        action = messaging["quick_reply"]["payload"].split("_")
+                        transaction = db.transactions.find_one({"_id": ObjectId(action[2])})
+                        acoount = db.accountPool.find_one({"_id": ObjectId(user["account_id"])})
+                        friend = user.find_one({"id": transaction["recipient"]})
+                        if action[1] is "N":
+                            payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
+                                       "order_number": transaction["_id"], "currency": "USD",
+                                       "payment_method": acoount["cardNumber"], "order_url": "",
+                                       "timestamp": datetime.timestamp(),
+                                       "summary": {"total_cost": transaction["amount"]}, "elements": []}
+
+                            element = {"title": "Envio de Dinero a " + friend["first_name"],
+                                       "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
+                                       "image_url":  os.environ["IMAGE_URL"] + "?file=profile/" + friend["id"] + ".jpg"}
+                            payload["elements"].append(element)
+                            message = {"attachment": {"type": "template", "payload": payload}}
+                            data = {"recipient": {"id": user["id"]}, "message": message}
+                            db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                                   {"$set": {"amount": action[1],
+                                                             "status": 4}})
+                            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers,
+                                          data=data)
+                            options = [
+                                {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + transaction["_id"]},
+                                {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + transaction["_id"]}]
+                            send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
+                            return "OK", 200
+                        if action[1] is "Y":
+                            send_options(user["id"], options, "indicame la descripcion del envio?")
+                            return "OK", 200
 
             if "postback" in messaging:
                 if "tyc" not in user:
