@@ -125,10 +125,10 @@ def get_message():
                             db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                                    {"$set": {"amount": action[1],
                                                              "status": 4}})
-                            rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                                                headers=headers,
-                                                data=data)
-                            log(rsp)
+                            log(data)
+                            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                                          headers=headers,
+                                          data=data)
                             options = [
                                 {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + str(transaction["_id"])},
                                 {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + str(transaction["_id"])}]
