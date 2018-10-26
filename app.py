@@ -137,10 +137,15 @@ def get_message():
                         if action[1] is "Y":
                             send_options(user["id"], options, "indicame la descripcion del envio?")
                             return "OK", 200
+
                         if action[2] is "CONFIRM":
                             log(action)
+                            send_options(user["id"], options, "Ejecutando")
                             return "OK", 200
                         if action[2] is "CANCEL":
+                            send_options(user["id"], options, "Vale! cancelamos tu transaccion")
+                            db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                                   {"$set": {"status": 0}})
                             return "OK", 200
 
                 if "text" in data['entry'][0]['messaging'][0]["message"]:
