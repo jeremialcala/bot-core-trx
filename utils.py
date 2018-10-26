@@ -44,7 +44,7 @@ def get_user_by_name(name, operation, db):
             buttons = {}
             elements = {"buttons": [], "title": friend["first_name"] + " " + friend["last_name"],
                         "subtitle": friend["location"]["Address"]["Label"],
-                        "image_url": image_url + "?file=profile/" + friend["id"] + ".jpg"}
+                        "image_url": image_url + "?file=profile/" + friend["id"] + ".png"}
             buttons["title"] = "Enviar Dinero"
             buttons["type"] = "postback"
             buttons["payload"] = operation + "|" + friend["id"]

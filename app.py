@@ -54,7 +54,7 @@ def get_message():
 
             if result.count() is 0:
                 db.users.insert_one(user)
-                pic_profile = "profile/" + user["id"] + ".jpg"
+                pic_profile = "profile/" + user["id"] + ".png"
                 log(pic_profile)
                 urllib.request.urlretrieve(user["profile_pic"], pic_profile)
             else:
@@ -118,25 +118,29 @@ def get_message():
 
                             element = {"title": "Envio de Dinero a " + friend["first_name"],
                                        "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
-                                       "image_url":  os.environ["IMAGES_URL"] + "?file=profile/" + friend["id"] + ".jpg"}
+                                       "image_url":  os.environ["IMAGES_URL"] + "?file=profile/" + friend["id"] + ".png"}
                             payload["elements"].append(element)
                             message = {"attachment": {"type": "template", "payload": payload}}
                             data = {"recipient": {"id": user["id"]}, "message": message}
                             db.transactions.update({"_id": ObjectId(transaction["_id"])},
-                                                   {"$set": {"amount": action[1],
-                                                             "status": 4}})
+                                                   {"$set": {"status": 4}})
                             log(data)
                             rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                                                 headers=headers,
                                                 data=json.dumps(data))
                             log(rsp.text)
                             options = [
-                                {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + str(transaction["_id"])},
-                                {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + str(transaction["_id"])}]
+                                {"content_type": "text", "title": "Confirmado", "payload": "TRX_DO_CONFIRM_" + str(transaction["_id"])},
+                                {"content_type": "text", "title": "Cancelar", "payload": "TRX_DO_CANCEL_" + str(transaction["_id"])}]
                             send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
                             return "OK", 200
                         if action[1] is "Y":
                             send_options(user["id"], options, "indicame la descripcion del envio?")
+                            return "OK", 200
+                        if action[2] is "CONFIRM":
+                            log(action)
+                            return "OK", 200
+                        if action[2] is "CANCEL":
                             return "OK", 200
 
                 if "text" in data['entry'][0]['messaging'][0]["message"]:
@@ -414,8 +418,8 @@ def generator(categories, db, user):
     if "registration" in categories:
         send_message(user["id"], "Listo! vamos a iniciar el proceso")
         db.users.update({"id": user['id']}, {'$set': {'registedStatus': 0, "date-registedStatus": datetime.now()}})
-        options = [{"content_type": "text", "title": "$5", "payload": "POSTBACK_PAYLOAD"},
-                   {"content_type": "text", "title": "$10", "payload": "GET_STARTED_PAYLOAD"}]
+        options = [{"content_type": "text", "title": "Cedula", "payload": "DNI_PAYLOAD"},
+                   {"content_type": "text", "title": "Pasaporte", "payload": "PASSPORT_PAYLOAD"}]
         send_options(user["id"], options, "que tipo de documento tienes?")
         message = ""
 
