@@ -112,8 +112,8 @@ def get_message():
                         if action[1] is "N":
                             payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
                                        "order_number": str(transaction["_id"]), "currency": "USD",
-                                       "payment_method": account["cardNumber"], "order_url": "",
-                                       "timestamp": datetime.timestamp(datetime.now()),
+                                       "payment_method": "VISA " + account["cardNumber"][2:], "order_url": "",
+                                       "timestamp": str(datetime.timestamp(datetime.now())).split(".")[0],
                                        "summary": {"total_cost": transaction["amount"]}, "elements": []}
 
                             element = {"title": "Envio de Dinero a " + friend["first_name"],
