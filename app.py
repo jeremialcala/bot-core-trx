@@ -113,7 +113,7 @@ def get_message():
                             payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
                                        "order_number": transaction["_id"], "currency": "USD",
                                        "payment_method": account["cardNumber"], "order_url": "",
-                                       "timestamp": datetime.timestamp(),
+                                       "timestamp": datetime.timestamp(datetime.now()),
                                        "summary": {"total_cost": transaction["amount"]}, "elements": []}
 
                             element = {"title": "Envio de Dinero a " + friend["first_name"],
