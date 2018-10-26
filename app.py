@@ -141,12 +141,17 @@ def get_message():
 
                 if "SEND_MONEY" in messaging["postback"]["payload"]:
                     action = messaging["postback"]["payload"].split("|")
+
                     friend = db.users.find_one({"id": action[1]})
-                    options = [{"content_type": "text", "title": "$2", "payload": "SEND_2"},
-                               {"content_type": "text", "title": "$5", "payload": "SEND_5"},
-                               {"content_type": "text", "title": "$8", "payload": "SEND_8"},
-                               {"content_type": "text", "title": "$10", "payload": "SEND_10"}]
-                    send_options(user["id"], options, "Cuanto 💸 deseas enviale a " + friend["first_name"] + "?")
+                    transaction = {"sender": user["id"], "recipient": friend["id"], "type": 1, "status": 1,
+                                   "status-date": datetime.now()}
+                    transaction_id = db.transactions.insert_one(transaction)
+
+                    options = [{"content_type": "text", "title": "$2", "payload": "SEND_2_" + transaction_id},
+                               {"content_type": "text", "title": "$5", "payload": "SEND_5_" + transaction_id},
+                               {"content_type": "text", "title": "$10", "payload": "SEND_10_" + transaction_id},
+                               {"content_type": "text", "title": "Otro", "payload": "SEND_CUSTOM_" + transaction_id}]
+                    send_options(user["id"], options, "Cuanto 💵 deseas enviale a " + friend["first_name"] + "?")
                     return "OK", 200
 
                 if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
