@@ -205,7 +205,7 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
 
 
 def execute_send_money(transaction, db=get_mongodb()):
-
+    log(transaction)
     api_headers = {"x-country": "Usd",
                    "language": "es",
                    "channel": "API",
@@ -256,6 +256,7 @@ def execute_send_money(transaction, db=get_mongodb()):
             return "OK", 200
         else:
             send_message(sender["id"], response["msg"])
+            return "OK", 200
     else:
         send_message(sender["id"], "no logramos hacer el envio, por favor intenta mas tarde.")
         return "OK", 200
