@@ -108,7 +108,7 @@ def get_message():
                         action = messaging["message"]["quick_reply"]["payload"].split("_")
                         transaction = db.transactions.find_one({"_id": ObjectId(action[3])})
                         account = db.accountPool.find_one({"_id": ObjectId(user["accountId"])})
-                        friend = user.find_one({"id": transaction["recipient"]})
+                        friend = db.users.find_one({"id": transaction["recipient"]})
                         if action[1] is "N":
                             payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
                                        "order_number": transaction["_id"], "currency": "USD",
