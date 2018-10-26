@@ -111,7 +111,7 @@ def get_message():
                         friend = db.users.find_one({"id": transaction["recipient"]})
                         if action[1] is "N":
                             payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
-                                       "order_number": transaction["_id"], "currency": "USD",
+                                       "order_number": str(transaction["_id"]), "currency": "USD",
                                        "payment_method": account["cardNumber"], "order_url": "",
                                        "timestamp": datetime.timestamp(datetime.now()),
                                        "summary": {"total_cost": transaction["amount"]}, "elements": []}
