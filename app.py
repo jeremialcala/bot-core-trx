@@ -145,7 +145,7 @@ def get_message():
                     friend = db.users.find_one({"id": action[1]})
                     transaction = {"sender": user["id"], "recipient": friend["id"], "type": 1, "status": 1,
                                    "status-date": datetime.now()}
-                    transaction_id = db.transactions.insert_one(transaction)
+                    transaction_id = db.transactions.insert(transaction)
 
                     options = [{"content_type": "text", "title": "$2", "payload": "SEND_2_" + str(transaction_id)},
                                {"content_type": "text", "title": "$5", "payload": "SEND_5_" + str(transaction_id)},
