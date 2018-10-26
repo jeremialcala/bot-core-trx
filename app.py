@@ -23,7 +23,7 @@ headers = {
 objects = []
 np_oauth_token = get_oauth_token()
 
-from services import user_origination, get_user_balance, get_user_movements
+from services import user_origination, get_user_balance, get_user_movements, execute_send_money
 
 
 @app.route('/', methods=['GET'])
@@ -146,6 +146,7 @@ def get_message():
                         if "CONFIRM" in messaging["message"]["quick_reply"]["payload"]:
                             log("this acction!!!")
                             send_message(user["id"], "Ejecutando")
+                            execute_send_money(transaction, db)
                             return "OK", 200
 
                         if "CANCEL" in messaging["message"]["quick_reply"]["payload"]:

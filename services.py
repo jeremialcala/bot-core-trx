@@ -203,3 +203,59 @@ def create_mov_attachment(user, mov_list, db=get_mongodb()):
     db.movements.update({"_id": ObjectId(mov_list["_id"])},
                         {'$set': {"page": mov_count}})
 
+
+def execute_send_money(transaction, db=get_mongodb()):
+
+    api_headers = {"x-country": "Usd",
+                   "language": "es",
+                   "channel": "API",
+                   "accept": "application/json",
+                   "Content-Type": "application/json",
+                   "Authorization": "Bearer $OAUTH2TOKEN$"}
+
+    api_headers["Authorization"] = api_headers["Authorization"] \
+        .replace("$OAUTH2TOKEN$", os.environ["NP_OAUTH2_TOKEN"])
+
+    sender = db.users.find_one({"id": transaction["sender"]})
+    account_s = db.accountPool.find_one({"id": sender["accountId"]})
+
+    url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
+          + account_s["indx"] + "/employee/" + sender["document"]["documentNumber"] \
+          + "/debit-inq?trxid=" + str(random_with_n_digits(10))
+
+    data = {"description": "Envio de dinero FB", "amount": transaction["amount"],
+            "fee": "0.00", "ref-number": str(transaction["_id"])}
+    api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method="GET")
+
+    if api_response.status_code == 200:
+        recipient = db.users.find_one({"id": transaction["recipient"]})
+        account = db.accountPool.find_one({"id": recipient["accountId"]})
+        url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
+              + account["indx"] + "/employee/" + recipient["document"]["documentNumber"] \
+              + "/credit-inq?trxid=" + str(random_with_n_digits(10))
+        api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method="GET")
+        if api_response.status_code == 200:
+            send_message(sender["id"], "envio de dinero exitoso")
+            send_message(recipient["id"], "Hola " + recipient["first_name"] + " hemos depositado en tu cuenta "
+                         + transaction["amount"] + " a nombre de " + sender["first_name"])
+            return "OK", 200
+        else:
+            url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
+                  + account_s["indx"] + "/employee/" + sender["document"]["documentNumber"] \
+                  + "/credit-inq?trxid=" + str(random_with_n_digits(10))
+            data = {"description": "Reverso envio de dinero FB", "amount": transaction["amount"],
+                    "fee": "0.00", "ref-number": str(transaction["_id"])}
+            api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method="GET")
+            if api_response.status_code == 200:
+                send_message(sender["id"], "no logramos hacer el envio, hemos ya reversado los fondos en tu cuenta.")
+    elif api_response.status_code == 400:
+        response = json.dumps(api_response.text)
+        if response["rc"] == "51":
+            send_message(sender["id"], "no cuentas con suficiente saldo, recarga el saldo en tu cuenta "
+                                       "o intenta con un monto menor")
+            return "OK", 200
+        else:
+            send_message(sender["id"], response["msg"])
+    else:
+        send_message(sender["id"], "no logramos hacer el envio, por favor intenta mas tarde.")
+        return "OK", 200
