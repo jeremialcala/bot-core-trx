@@ -135,16 +135,17 @@ def get_message():
                                 {"content_type": "text", "title": "Cancelar", "payload": "TRX_DO_CANCEL_" + str(transaction["_id"])}]
                             send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
                             return "OK", 200
+
                         if action[1] is "Y":
                             send_options(user["id"], options, "indicame la descripcion del envio?")
                             return "OK", 200
 
                         if action[2] is "CONFIRM":
                             log(action)
-                            send_options(user["id"], options, "Ejecutando")
+                            send_message(user["id"], "Ejecutando")
                             return "OK", 200
                         if action[2] is "CANCEL":
-                            send_options(user["id"], options, "Vale! cancelamos tu transaccion")
+                            send_message(user["id"], "Vale! cancelamos tu transaccion")
                             db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                                    {"$set": {"status": 0}})
                             return "OK", 200
