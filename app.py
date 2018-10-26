@@ -144,9 +144,7 @@ def get_message():
                     friend = db.users.find_one({"id": action[1]})
                     options = [{"content_type": "text", "title": "$5", "payload": "SEND_5"},
                                {"content_type": "text", "title": "$10", "payload": "SEND_10"}]
-                    send_options(user["id"], options, "Cuanto deseas enviale a " + friend["first_name"] + "?")
-                    send_message(user["id"], "Claro que si vamos a empezar")
-                    send_operations(user["id"])
+                    send_options(user["id"], options, "Cuanto 💸 deseas enviale a " + friend["first_name"] + "?")
                     return "OK", 200
 
                 if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
