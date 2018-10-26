@@ -33,7 +33,7 @@ def get_user_by_name(name, operation, db):
     log(criteria)
     image_url = os.environ["IMAGES_URL"]
     result = db.users.find(criteria)
-    buttons = {}
+
     attachment = {"type": "template"}
     payload = {"template_type": "generic", "elements": []}
     log(result.count())
@@ -41,6 +41,7 @@ def get_user_by_name(name, operation, db):
         return "No se encontraron usuarios", 404
     else:
         for friend in result:
+            buttons = {}
             elements = {"buttons": [], "title": friend["first_name"] + " " + friend["last_name"],
                         "subtitle": friend["location"]["Address"]["Label"],
                         "image_url": image_url + "?file=profile/" + friend["id"] + ".jpg"}
