@@ -141,7 +141,7 @@ def get_message():
 
                 if "SEND_MONEY" in messaging["postback"]["payload"]:
                     action = messaging["postback"]["payload"].split("|")
-                    friend = user.find_one({"id": action[1]})
+                    friend = db.users.find_one({"id": action[1]})
                     options = [{"content_type": "text", "title": "$5", "payload": "SEND_5"},
                                {"content_type": "text", "title": "$10", "payload": "SEND_10"}]
                     send_options(user["id"], options, "Cuanto deseas enviale a " + friend["first_name"] + "?")
