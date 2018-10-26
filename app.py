@@ -127,13 +127,13 @@ def get_message():
                                                              "status": 4}})
                             log(data)
                             rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                                          headers=headers,
-                                          data=data)
+                                                headers=headers,
+                                                data=json.dumps(data))
                             log(rsp.text)
                             options = [
                                 {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + str(transaction["_id"])},
                                 {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + str(transaction["_id"])}]
-                            # send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
+                            send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
                             return "OK", 200
                         if action[1] is "Y":
                             send_options(user["id"], options, "indicame la descripcion del envio?")
