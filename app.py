@@ -126,9 +126,10 @@ def get_message():
                                                    {"$set": {"amount": action[1],
                                                              "status": 4}})
                             log(data)
-                            requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                            rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
                                           headers=headers,
                                           data=data)
+                            log(rsp.text)
                             options = [
                                 {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + str(transaction["_id"])},
                                 {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + str(transaction["_id"])}]
