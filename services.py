@@ -217,6 +217,7 @@ def execute_send_money(transaction, db=get_mongodb()):
         .replace("$OAUTH2TOKEN$", os.environ["NP_OAUTH2_TOKEN"])
 
     sender = db.users.find_one({"id": transaction["sender"]})
+    log(sender)
     account_s = db.accountPool.find_one({"id": sender["accountId"]})
 
     url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
