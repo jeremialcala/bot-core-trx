@@ -85,9 +85,9 @@ def get_message():
                                    {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
                         send_options(user["id"], options, "por donde prefieres recibirlo?")
 
-                if "quick_reply" in messaging:
-                    if "SEND_" in messaging["quick_reply"]["payload"]:
-                        action = messaging["quick_reply"]["payload"].split("_")
+                if "quick_reply" in messaging["message"]:
+                    if "SEND_" in messaging["message"]["quick_reply"]["payload"]:
+                        action = messaging["message"]["quick_reply"]["payload"].split("_")
                         transaction = db.transactions.find_one({"_id": ObjectId(action[2])})
                         if transaction is None:
                             send_message(user["id"], "oye " + user["fist_name"]
@@ -104,15 +104,15 @@ def get_message():
                         send_options(user["id"], options, "te gustaria enviar una descripción de tu pago?")
                         return "OK", 200
 
-                    if "TRX_" in messaging["quick_reply"]["payload"]:
-                        action = messaging["quick_reply"]["payload"].split("_")
+                    if "TRX_" in messaging["message"]["quick_reply"]["payload"]:
+                        action = messaging["message"]["quick_reply"]["payload"].split("_")
                         transaction = db.transactions.find_one({"_id": ObjectId(action[2])})
-                        acoount = db.accountPool.find_one({"_id": ObjectId(user["account_id"])})
+                        account = db.accountPool.find_one({"_id": ObjectId(user["account_id"])})
                         friend = user.find_one({"id": transaction["recipient"]})
                         if action[1] is "N":
                             payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
                                        "order_number": transaction["_id"], "currency": "USD",
-                                       "payment_method": acoount["cardNumber"], "order_url": "",
+                                       "payment_method": account["cardNumber"], "order_url": "",
                                        "timestamp": datetime.timestamp(),
                                        "summary": {"total_cost": transaction["amount"]}, "elements": []}
 
