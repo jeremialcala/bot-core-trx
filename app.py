@@ -99,8 +99,8 @@ def get_message():
                         db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                                {"$set": {"amount": action[1],
                                                          "status": 3}})
-                        options = [{"content_type": "text", "title": "Si", "payload": "TRX_Y_MSG_" + transaction["_id"]},
-                                   {"content_type": "text", "title": "No", "payload": "TRX_N_MSG_" + transaction["_id"]}]
+                        options = [{"content_type": "text", "title": "Si", "payload": "TRX_Y_MSG_" + str(transaction["_id"])},
+                                   {"content_type": "text", "title": "No", "payload": "TRX_N_MSG_" + str(transaction["_id"])}]
                         send_options(user["id"], options, "te gustaria enviar una descripción de tu pago?")
                         return "OK", 200
 
@@ -128,8 +128,8 @@ def get_message():
                             requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers,
                                           data=data)
                             options = [
-                                {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + transaction["_id"]},
-                                {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + transaction["_id"]}]
+                                {"content_type": "text", "title": "Confirmado", "payload": "TRX_CONFIRM_" + str(transaction["_id"])},
+                                {"content_type": "text", "title": "Cancelar", "payload": "TRX_CANCEL_" + str(transaction["_id"])}]
                             send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
                             return "OK", 200
                         if action[1] is "Y":
