@@ -85,48 +85,6 @@ def get_message():
                                    {"content_type": "text", "title": "Correo", "payload": "POSTBACK_PAYLOAD"}]
                         send_options(user["id"], options, "por donde prefieres recibirlo?")
 
-                if "text" in data['entry'][0]['messaging'][0]["message"]:
-                    message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
-                    log(message)
-
-                    if "operationStatus" in user:
-                        log("operationStatus")
-                        if user["operationStatus"] == 1:
-                            rsp = get_user_by_name(name=message, operation="SEND_MONEY", db=db)
-                            log(rsp)
-                            if rsp[1] == 200:
-                                send_message(user["id"], "Selecciona la persona a la que quieres enviar el dinero")
-                                attachment = rsp[2]
-                                recipient = {"id": user["id"]}
-                                rsp_message = {"attachment": attachment}
-                                data = {"recipient": recipient, "message": rsp_message}
-                                log(data)
-                                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                                              headers=headers, data=json.dumps(data))
-                                return "OK", 200
-
-                    if "registedStatus" in user:
-                        response = save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
-                        if response["rc"] == 0:
-                            return "OK", 200
-
-                    categories = classification(message, False, db)
-
-                    log(categories)
-                    response = generator(categories, db, user)
-
-                    log(response)
-                    user = response["user"]
-                    send_message(user["id"], response["msg"])
-
-                    if "tyc" not in user:
-                        send_termandc(user["id"])
-                        accept_tyc(user["id"])
-                        return "OK", 200
-
-                    if "greet" in categories:
-                        send_operations(user["id"])
-
                 if "quick_reply" in messaging:
                     if "SEND_" in messaging["quick_reply"]["payload"]:
                         action = messaging["quick_reply"]["payload"].split("_")
@@ -177,6 +135,48 @@ def get_message():
                         if action[1] is "Y":
                             send_options(user["id"], options, "indicame la descripcion del envio?")
                             return "OK", 200
+
+                if "text" in data['entry'][0]['messaging'][0]["message"]:
+                    message = data['entry'][0]['messaging'][0]["message"]["text"].split(" ")
+                    log(message)
+
+                    if "operationStatus" in user:
+                        log("operationStatus")
+                        if user["operationStatus"] == 1:
+                            rsp = get_user_by_name(name=message, operation="SEND_MONEY", db=db)
+                            log(rsp)
+                            if rsp[1] == 200:
+                                send_message(user["id"], "Selecciona la persona a la que quieres enviar el dinero")
+                                attachment = rsp[2]
+                                recipient = {"id": user["id"]}
+                                rsp_message = {"attachment": attachment}
+                                data = {"recipient": recipient, "message": rsp_message}
+                                log(data)
+                                requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                                              headers=headers, data=json.dumps(data))
+                                return "OK", 200
+
+                    if "registedStatus" in user:
+                        response = save_user_information(user, data['entry'][0]['messaging'][0]["message"]["text"], db)
+                        if response["rc"] == 0:
+                            return "OK", 200
+
+                    categories = classification(message, False, db)
+
+                    log(categories)
+                    response = generator(categories, db, user)
+
+                    log(response)
+                    user = response["user"]
+                    send_message(user["id"], response["msg"])
+
+                    if "tyc" not in user:
+                        send_termandc(user["id"])
+                        accept_tyc(user["id"])
+                        return "OK", 200
+
+                    if "greet" in categories:
+                        send_operations(user["id"])
 
             if "postback" in messaging:
                 if "tyc" not in user:
