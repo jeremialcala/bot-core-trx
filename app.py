@@ -106,7 +106,7 @@ def get_message():
 
                     if "TRX_" in messaging["message"]["quick_reply"]["payload"]:
                         action = messaging["message"]["quick_reply"]["payload"].split("_")
-                        transaction = db.transactions.find_one({"_id": ObjectId(action[2])})
+                        transaction = db.transactions.find_one({"_id": ObjectId(action[3])})
                         account = db.accountPool.find_one({"_id": ObjectId(user["account_id"])})
                         friend = user.find_one({"id": transaction["recipient"]})
                         if action[1] is "N":
