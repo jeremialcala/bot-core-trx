@@ -147,10 +147,10 @@ def get_message():
                                    "status-date": datetime.now()}
                     transaction_id = db.transactions.insert_one(transaction)
 
-                    options = [{"content_type": "text", "title": "$2", "payload": "SEND_2_" + transaction_id},
-                               {"content_type": "text", "title": "$5", "payload": "SEND_5_" + transaction_id},
-                               {"content_type": "text", "title": "$10", "payload": "SEND_10_" + transaction_id},
-                               {"content_type": "text", "title": "Otro", "payload": "SEND_CUSTOM_" + transaction_id}]
+                    options = [{"content_type": "text", "title": "$2", "payload": "SEND_2_" + str(transaction_id)},
+                               {"content_type": "text", "title": "$5", "payload": "SEND_5_" + str(transaction_id)},
+                               {"content_type": "text", "title": "$10", "payload": "SEND_10_" + str(transaction_id)},
+                               {"content_type": "text", "title": "Otro", "payload": "SEND_CUSTOM_" + str(transaction_id)}]
                     send_options(user["id"], options, "Cuanto 💵 deseas enviale a " + friend["first_name"] + "?")
                     return "OK", 200
 
