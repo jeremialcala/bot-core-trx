@@ -94,7 +94,7 @@ def get_message():
                             send_message(user["id"], "oye " + user["fist_name"]
                                          + ", no recuerdo a quien querias enviar dinero.")
                             return "OK", 200
-                        if action[1] is "OTHER":
+                        if "OTHER" in messaging["message"]["quick_reply"]["payload"]:
                             send_message(user["id"], "indicame el monto que quieres enviar")
                             return "OK", 200
                         db.transactions.update({"_id": ObjectId(transaction["_id"])},

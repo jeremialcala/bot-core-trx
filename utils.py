@@ -190,7 +190,7 @@ def send_payment_receipt(transaction):
                "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
                "image_url": friend["profile_pic"]}
 
-    if transaction["description"] is not None:
+    if "description" in transaction:
         element["subtitle"] = transaction["description"]
         db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                {"$set": {"description": transaction["description"]}})
