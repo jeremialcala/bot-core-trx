@@ -162,7 +162,6 @@ def get_current_transaction(user):
 
     for transaction in transactions:
         transactionTime = transaction["status-date"] - datetime.now()
-        log(transaction)
         log(transactionTime.seconds)
         if transactionTime.seconds > 180:
             db.transactions.update({"_id": ObjectId(transaction["_id"])},

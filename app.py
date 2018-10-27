@@ -430,7 +430,7 @@ def generator(categories, db, user):
                 message = "indicame tu numero de celular"
 
         if user["registedStatus"] == 6:
-            if "balnace" in categories:
+            if "balance" in categories:
                 get_user_balance(user, get_mongodb())
                 message = ""
             if "movements" in categories:
