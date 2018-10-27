@@ -227,7 +227,8 @@ def execute_send_money(transaction, db=get_mongodb()):
     data = {"description": "Envio de dinero FB", "amount": transaction["amount"],
             "fee": "0.00", "ref-number": str(transaction["_id"])}
     api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method=None)
-    response = json.dumps(api_response.text)
+    response = json.loads(api_response.text)
+    log(response)
     if api_response.status_code == 200:
         recipient = db.users.find_one({"id": transaction["recipient"]})
         account = db.accountPool.find_one({"_id": ObjectId(recipient["accountId"])})
@@ -254,7 +255,7 @@ def execute_send_money(transaction, db=get_mongodb()):
                 db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                        {"$set": {"status": 6, "observations": response["msg"]}})
     elif api_response.status_code == 400:
-        response = json.dumps(api_response.text)
+        response = json.loads(api_response.text)
         if response["rc"] == "51":
             send_message(sender["id"], "no cuentas con suficiente saldo, recarga el saldo en tu cuenta "
                                        "o intenta con un monto menor")
