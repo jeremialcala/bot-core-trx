@@ -436,7 +436,7 @@ def generator(categories, db, user):
             if "movements" in categories:
                 get_user_movements(user, get_mongodb())
                 message = ""
-            if user["operationStatus"] is not None and "payment" in categories:
+            if user["operationStatus"] == 1 and "payment" in categories:
                 transaction = get_current_transaction(user)
                 if transaction["status"] is not 0:
                     send_payment_receipt()
