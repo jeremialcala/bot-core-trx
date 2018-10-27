@@ -439,7 +439,7 @@ def generator(categories, db, user):
             if user["operationStatus"] == 1 and "payment" in categories:
                 transaction = get_current_transaction(user)
                 if transaction["status"] is not 0:
-                    send_payment_receipt()
+                    send_payment_receipt(transaction)
                     message = ""
 
     return {"user": user, "msg": message}
