@@ -227,7 +227,7 @@ def execute_send_money(transaction, db=get_mongodb()):
     data = {"description": "Envio de dinero FB", "amount": transaction["amount"],
             "fee": "0.00", "ref-number": str(transaction["_id"])}
     api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method=None)
-
+    response = json.dumps(api_response.text)
     if api_response.status_code == 200:
         recipient = db.users.find_one({"id": transaction["recipient"]})
         account = db.accountPool.find_one({"_id": ObjectId(recipient["accountId"])})
@@ -239,6 +239,8 @@ def execute_send_money(transaction, db=get_mongodb()):
             send_message(sender["id"], "envio de dinero exitoso")
             send_message(recipient["id"], "Hola " + recipient["first_name"] + " hemos depositado en tu cuenta "
                          + transaction["amount"] + " a nombre de " + sender["first_name"])
+            db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                   {"$set": {"status": 5, "observations": response["msg"]}})
             return "OK", 200
         else:
             url = os.environ["NP_URL"] + os.environ["CEOAPI"] + os.environ["CEOAPI_VER"] \
@@ -249,15 +251,23 @@ def execute_send_money(transaction, db=get_mongodb()):
             api_response = np_api_request(url=url, data=data, api_headers=api_headers, http_method="GET")
             if api_response.status_code == 200:
                 send_message(sender["id"], "no logramos hacer el envio, hemos ya reversado los fondos en tu cuenta.")
+                db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                       {"$set": {"status": 6, "observations": response["msg"]}})
     elif api_response.status_code == 400:
         response = json.dumps(api_response.text)
         if response["rc"] == "51":
             send_message(sender["id"], "no cuentas con suficiente saldo, recarga el saldo en tu cuenta "
                                        "o intenta con un monto menor")
+            db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                   {"$set": {"status": 6, "observations": response["msg"]}})
             return "OK", 200
         else:
             send_message(sender["id"], response["msg"])
+            db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                   {"$set": {"status": 6}})
             return "OK", 200
     else:
         send_message(sender["id"], "no logramos hacer el envio, por favor intenta mas tarde.")
+        db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                               {"$set": {"status": 6, "observations": response["msg"]}})
         return "OK", 200

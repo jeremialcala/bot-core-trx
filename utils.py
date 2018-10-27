@@ -5,6 +5,16 @@ import os
 import sys
 import re
 from random import randint
+from datetime import datetime
+from bson import ObjectId
+
+
+params = {
+    "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+}
+headers = {
+    "Content-Type": "application/json"
+}
 
 
 def get_oauth_token():
@@ -134,3 +144,64 @@ def validate_re(pattern, text):
         return False
     return True
 
+
+def send_options(recipient_id, options, text):
+    data = {"recipient": {"id": recipient_id}, "message": {"text": text, "quick_replies": []}}
+    for option in options:
+        data["message"]["quick_replies"].append(option)
+    log(data)
+    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=json.dumps(data))
+
+
+def get_current_transaction(user):
+    db = get_mongodb()
+    transactions = db.transactions.find({"sender": user["id"], "status": 3})
+    ccurr_transaction = {"status": 0, "observation": "Not Transaction found"}
+    if transactions is None:
+        return ccurr_transaction
+
+    for transaction in transactions:
+        transactionTime = transaction["status-date"] - datetime.now()
+        log(transaction)
+        log(transactionTime.seconds)
+        if transactionTime.seconds > 180:
+            db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                   {"$set": {"status": 0}})
+        else:
+            return transaction
+
+    return ccurr_transaction
+
+
+def send_payment_receipt(transaction):
+    db = get_mongodb()
+
+    user = db.users.find_one({"id": transaction["sender"]})
+    friend = db.users.find_one({"id": transaction["recipient"]})
+
+    account = db.accountPool.find_one({"_id": ObjectId(user["accountId"])})
+
+    payload = {"template_type": "receipt", "recipient_name": friend["first_name"],
+               "order_number": str(transaction["_id"]), "currency": "USD",
+               "payment_method": "VISA " + account["cardNumber"][2:], "order_url": "",
+               "timestamp": str(datetime.timestamp(datetime.now())).split(".")[0],
+               "summary": {"total_cost": transaction["amount"]}, "elements": []}
+
+    element = {"title": "Envio de Dinero a " + friend["first_name"],
+               "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
+               "image_url": friend["profile_pic"]}
+    payload["elements"].append(element)
+    message = {"attachment": {"type": "template", "payload": payload}}
+    data = {"recipient": {"id": user["id"]}, "message": message}
+    db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                           {"$set": {"status": 4}})
+    log(data)
+    rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
+                        headers=headers,
+                        data=json.dumps(data))
+    log(rsp.text)
+    options = [
+        {"content_type": "text", "title": "Confirmado", "payload": "TRX_DO_CONFIRM_" + str(transaction["_id"])},
+        {"content_type": "text", "title": "Cancelar", "payload": "TRX_DO_CANCEL_" + str(transaction["_id"])}]
+
+    send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")

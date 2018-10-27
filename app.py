@@ -9,7 +9,8 @@ from bson import ObjectId
 from flask import Flask, request, send_file
 from twilio.rest import Client
 
-from utils import get_oauth_token, get_user_by_name, log, get_mongodb, random_with_n_digits, send_message
+from utils import get_oauth_token, get_user_by_name, log, get_mongodb, random_with_n_digits, send_message, \
+    send_options, send_payment_receipt, get_current_transaction
 
 app = Flask(__name__)
 
@@ -107,40 +108,17 @@ def get_message():
                     if "TRX_" in messaging["message"]["quick_reply"]["payload"]:
                         action = messaging["message"]["quick_reply"]["payload"].split("_")
                         transaction = db.transactions.find_one({"_id": ObjectId(action[3])})
-                        account = db.accountPool.find_one({"_id": ObjectId(user["accountId"])})
-                        friend = db.users.find_one({"id": transaction["recipient"]})
 
                         for item in action:
                             print(type(item))
 
                         if action[1] is "N":
-                            payload = {"template_type": "receipt", "recipient_name": "Eduardo Cold",
-                                       "order_number": str(transaction["_id"]), "currency": "USD",
-                                       "payment_method": "VISA " + account["cardNumber"][2:], "order_url": "",
-                                       "timestamp": str(datetime.timestamp(datetime.now())).split(".")[0],
-                                       "summary": {"total_cost": transaction["amount"]}, "elements": []}
-
-                            element = {"title": "Envio de Dinero a " + friend["first_name"],
-                                       "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
-                                       "image_url":  friend["profile_pic"]}
-                            payload["elements"].append(element)
-                            message = {"attachment": {"type": "template", "payload": payload}}
-                            data = {"recipient": {"id": user["id"]}, "message": message}
-                            db.transactions.update({"_id": ObjectId(transaction["_id"])},
-                                                   {"$set": {"status": 4}})
-                            log(data)
-                            rsp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params,
-                                                headers=headers,
-                                                data=json.dumps(data))
-                            log(rsp.text)
-                            options = [
-                                {"content_type": "text", "title": "Confirmado", "payload": "TRX_DO_CONFIRM_" + str(transaction["_id"])},
-                                {"content_type": "text", "title": "Cancelar", "payload": "TRX_DO_CANCEL_" + str(transaction["_id"])}]
-                            send_options(user["id"], options, "Estamos listos para enviar el pago, estas de acuerdo?")
+                            send_payment_receipt(transaction)
                             return "OK", 200
 
                         if action[1] is "Y":
                             send_message(user["id"], "indicame la descripcion del envio?")
+                            send_message(user["id"], "colocala as \"pago por descripción del pago\" ")
                             return "OK", 200
 
                         if "CONFIRM" in messaging["message"]["quick_reply"]["payload"]:
@@ -152,7 +130,7 @@ def get_message():
                         if "CANCEL" in messaging["message"]["quick_reply"]["payload"]:
                             send_message(user["id"], "Vale! cancelamos tu transaccion")
                             db.transactions.update({"_id": ObjectId(transaction["_id"])},
-                                                   {"$set": {"status": 0}})
+                                                   {"$set": {"status": 6}})
                             return "OK", 200
 
                 if "text" in data['entry'][0]['messaging'][0]["message"]:
@@ -221,7 +199,7 @@ def get_message():
                                {"content_type": "text", "title": "$5", "payload": "SEND_5_" + str(transaction_id)},
                                {"content_type": "text", "title": "$10", "payload": "SEND_10_" + str(transaction_id)},
                                {"content_type": "text", "title": "Otro", "payload": "SEND_CUSTOM_" + str(transaction_id)}]
-                    send_options(user["id"], options, "Cuanto 💵 deseas enviale a " + friend["first_name"] + "?")
+                    send_options(user["id"], options, "Cuanto 💵 deseas enviarle a " + friend["first_name"] + "?")
                     return "OK", 200
 
                 if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
@@ -451,6 +429,19 @@ def generator(categories, db, user):
                                           "date-registedStatus": datetime.now()}})
                 message = "indicame tu numero de celular"
 
+        if user["registedStatus"] == 6:
+            if "balnace" in categories:
+                get_user_balance(user, get_mongodb())
+                message = ""
+            if "movements" in categories:
+                get_user_movements(user, get_mongodb())
+                message = ""
+            if user["operationStatus"] is not None and "payment" in categories:
+                transaction = get_current_transaction(user)
+                if transaction["status"] is not 0:
+                    send_payment_receipt()
+                    message = ""
+
     return {"user": user, "msg": message}
 
 
@@ -522,14 +513,6 @@ def send_termandc(recipient_id):
     })
     log(data)
     requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-
-
-def send_options(recipient_id, options, text):
-    data = {"recipient": {"id": recipient_id}, "message": {"text": text, "quick_replies": []}}
-    for option in options:
-        data["message"]["quick_replies"].append(option)
-    log(data)
-    requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=json.dumps(data))
 
 
 def accept_tyc(recipient_id):
