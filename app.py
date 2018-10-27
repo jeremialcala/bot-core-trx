@@ -118,7 +118,7 @@ def get_message():
 
                         if action[1] is "Y":
                             send_message(user["id"], "indicame la descripcion del envio?")
-                            send_message(user["id"], "colocala as \"pago por descripción del pago\" ")
+                            send_message(user["id"], "colocala asi: \"pago por\" + \"motivo del pago\" ")
                             return "OK", 200
 
                         if "CONFIRM" in messaging["message"]["quick_reply"]["payload"]:
@@ -161,7 +161,7 @@ def get_message():
                     categories = classification(message, False, db)
 
                     log(categories)
-                    response = generator(categories, db, user, message)
+                    response = generator(categories, db, user, data['entry'][0]['messaging'][0]["message"]["text"])
 
                     log(response)
                     user = response["user"]
