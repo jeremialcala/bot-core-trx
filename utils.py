@@ -189,6 +189,12 @@ def send_payment_receipt(transaction):
     element = {"title": "Envio de Dinero a " + friend["first_name"],
                "subtitle": "Envio de Dinero", "price": transaction["amount"], "currency": "USD",
                "image_url": friend["profile_pic"]}
+
+    if transaction["description"] is not None:
+        element["subtitle"] = transaction["description"]
+        db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                               {"$set": {"description": transaction["description"]}})
+
     payload["elements"].append(element)
     message = {"attachment": {"type": "template", "payload": payload}}
     data = {"recipient": {"id": user["id"]}, "message": message}

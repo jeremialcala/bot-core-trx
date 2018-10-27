@@ -161,7 +161,7 @@ def get_message():
                     categories = classification(message, False, db)
 
                     log(categories)
-                    response = generator(categories, db, user)
+                    response = generator(categories, db, user, message)
 
                     log(response)
                     user = response["user"]
@@ -388,7 +388,7 @@ def save_user_information(user, message, db):
     return response
 
 
-def generator(categories, db, user):
+def generator(categories, db, user, text):
     log("responseGenerator")
     message = "Hola te ayudaré a realizar las consultas que necesites de tus tarjetas"
     global mail_body
@@ -439,6 +439,7 @@ def generator(categories, db, user):
             if user["operationStatus"] == 1 and "payment" in categories:
                 transaction = get_current_transaction(user)
                 if transaction["status"] is not 0:
+                    transaction["description"] = text
                     send_payment_receipt(transaction)
                     message = ""
 
