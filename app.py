@@ -199,6 +199,10 @@ def get_message():
                                {"content_type": "text", "title": "$5", "payload": "SEND_5_" + str(transaction_id)},
                                {"content_type": "text", "title": "$10", "payload": "SEND_10_" + str(transaction_id)},
                                {"content_type": "text", "title": "Otro", "payload": "SEND_CUSTOM_" + str(transaction_id)}]
+
+                    db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                           {"$set": {"status": 2}})
+
                     send_options(user["id"], options, "Cuanto 💵 deseas enviarle a " + friend["first_name"] + "?")
                     return "OK", 200
 
@@ -438,7 +442,7 @@ def generator(categories, db, user, text):
                 message = ""
             if user["operationStatus"] == 1 and "payment" in categories:
                 transaction = get_current_transaction(user)
-                if transaction["status"] is not 0:
+                if transaction["status"] == 3:
                     transaction["description"] = text
                     send_payment_receipt(transaction)
                     message = ""

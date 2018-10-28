@@ -155,7 +155,7 @@ def send_options(recipient_id, options, text):
 
 def get_current_transaction(user):
     db = get_mongodb()
-    transactions = db.transactions.find({"sender": user["id"], "status": 3})
+    transactions = db.transactions.find({"sender": user["id"], "status": {"$gte": 2, "$lte": 3}})
     ccurr_transaction = {"status": 0, "observation": "Not Transaction found"}
     if transactions is None:
         return ccurr_transaction
