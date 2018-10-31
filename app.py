@@ -100,8 +100,12 @@ def get_message():
                         db.transactions.update({"_id": ObjectId(transaction["_id"])},
                                                {"$set": {"amount": action[1],
                                                          "status": 3}})
-                        options = [{"content_type": "text", "title": "Si", "payload": "TRX_Y_MSG_" + str(transaction["_id"])},
-                                   {"content_type": "text", "title": "No", "payload": "TRX_N_MSG_" + str(transaction["_id"])}]
+
+                        options = [{"content_type": "text", "title": "Si", "payload": "TRX_Y_MSG_" +
+                                                                                      str(transaction["_id"])},
+                                   {"content_type": "text", "title": "No", "payload": "TRX_N_MSG_" +
+                                                                                      str(transaction["_id"])}]
+
                         send_options(user["id"], options, "te gustaria enviar una descripción de tu pago?")
                         return "OK", 200
 
@@ -440,9 +444,20 @@ def generator(categories, db, user, text):
             if "movements" in categories:
                 get_user_movements(user, get_mongodb())
                 message = ""
-            if user["operationStatus"] == 1 and "payment" in categories:
+            if user["operationStatus"] == 1:
                 transaction = get_current_transaction(user)
-                if transaction["status"] == 3:
+                if transaction["status"] == 2:
+                    amount = only_numeric(text, amount=True)
+                    if amount["rc"] is 0:
+                        db.transactions.update({"_id": ObjectId(transaction["_id"])},
+                                               {"$set": {"amount": amount["numbers"],
+                                                         "status": 3}})
+                        options = [
+                            {"content_type": "text", "title": "Si", "payload": "TRX_Y_MSG_" + str(transaction["_id"])},
+                            {"content_type": "text", "title": "No", "payload": "TRX_N_MSG_" + str(transaction["_id"])}]
+                        send_options(user["id"], options, "te gustaria enviar una descripción de tu pago?")
+                        message = ""
+                if transaction["status"] == 3 and "payment" in categories:
                     transaction["description"] = text
                     send_payment_receipt(transaction)
                     message = ""
@@ -457,9 +472,13 @@ def get_document_type(categories):
         return categories[categories.index("passport")]
 
 
-def only_numeric(text):
+def only_numeric(text, amount = False):
     log("onlyNumerics: " + text)
     numbs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+    if amount:
+        numbs.append('.')
+
     resp = ""
     for char in text:
         if char in numbs:
