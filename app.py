@@ -210,22 +210,6 @@ def get_message():
                     send_options(user["id"], options, "Cuanto 💵 deseas enviarle a " + friend["first_name"] + "?")
                     return "OK", 200
 
-                if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
-                    if user["registedStatus"] == 6:
-                        get_user_balance(user, db)
-                        return "OK", 200
-
-                if messaging["postback"]["payload"] == "MOVEMENTS_PAYLOAD":
-                    if user["registedStatus"] == 6:
-                        get_user_movements(user, db)
-                        return "OK", 200
-
-                if "MOVEMENT_" in messaging["postback"]["payload"]:
-                    if user["registedStatus"] == 6:
-                        payload = messaging["postback"]["payload"].split("_")
-                        get_user_movements(user=user, db=db, mov_id=payload[1])
-                        return "OK", 200
-
                 if messaging["postback"]["payload"] == "GET_STARTED_PAYLOAD":
                     send_message(user["id"], "Claro que si vamos a empezar")
                     send_operations(user["id"])
@@ -282,6 +266,22 @@ def get_message():
                     db.users.update({"id": user['id']},
                                     {'$set': {"operationStatus": 1}})
                     return "OK", 200
+
+                if messaging["postback"]["payload"] == "BALANCE_PAYLOAD":
+                    if user["registedStatus"] == 6:
+                        get_user_balance(user, db)
+                        return "OK", 200
+
+                if messaging["postback"]["payload"] == "MOVEMENTS_PAYLOAD":
+                    if user["registedStatus"] == 6:
+                        get_user_movements(user, db)
+                        return "OK", 200
+
+                if "MOVEMENT_" in messaging["postback"]["payload"]:
+                    if user["registedStatus"] == 6:
+                        payload = messaging["postback"]["payload"].split("_")
+                        get_user_movements(user=user, db=db, mov_id=payload[1])
+                        return "OK", 200
 
         return "OK", 200
     except Exception as e:
