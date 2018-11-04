@@ -444,7 +444,7 @@ def generator(categories, db, user, text):
             if "movements" in categories:
                 get_user_movements(user, get_mongodb())
                 message = ""
-            if user["operationStatus"] == 1:
+            if "operationStatus" in user:
                 transaction = get_current_transaction(user)
                 if transaction["status"] == 2:
                     amount = only_numeric(text, amount=True)
